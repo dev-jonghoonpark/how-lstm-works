@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LSTM은 어떻게 기억하는가 — 셀 상태와 게이트</title>
+<meta name="description" content="RNN이 긴 문맥을 잃어버리는 이유부터 LSTM의 셀 상태·망각/입력/출력 게이트, GRU 등 변형까지. 브라우저에서 직접 조작하며 배우는 인터랙티브 교육 자료.">
+<style>
+:root{
+  color-scheme: light;
+  --surface-1:#fcfcfb;
+  --page:#f9f9f7;
+  --text-primary:#0b0b0b;
+  --text-secondary:#52514e;
+  --muted:#898781;
+  --grid:#e1e0d9;
+  --axis:#c3c2b7;
+  --border:rgba(11,11,11,0.10);
+  --s1:#2a78d6;   /* 셀 상태 / 기본 */
+  --s2:#eb6834;   /* 게이트 / 강조 */
+  --s3:#1baf7a;   /* 입력·후보 */
+  --s4:#8b5cf6;   /* 출력 */
+  --s8:#e34948;   /* 경고 / 소멸 */
+  --warn:#fab219;
+  --good:#0ca30c;
+  --wash:rgba(42,120,214,0.08);
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --surface-1:#1a1a19;
+  --page:#0d0d0d;
+  --text-primary:#ffffff;
+  --text-secondary:#c3c2b7;
+  --muted:#898781;
+  --grid:#2c2c2a;
+  --axis:#383835;
+  --border:rgba(255,255,255,0.10);
+  --s1:#3987e5;
+  --s2:#d95926;
+  --s3:#199e70;
+  --s4:#a78bfa;
+  --s8:#e66767;
+  --warn:#fab219;
+  --good:#0ca30c;
+  --wash:rgba(57,135,229,0.14);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+body{
+  margin:0; background:var(--page); color:var(--text-primary);
+  font-family:system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  font-size:16px; line-height:1.75; letter-spacing:-0.01em;
+}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px 120px}
+header.hero{padding:56px 0 28px;border-bottom:1px solid var(--border);margin-bottom:8px}
+h1{font-size:clamp(28px,5.2vw,42px);line-height:1.25;margin:0 0 12px;letter-spacing:-0.03em}
+.sub{color:var(--text-secondary);font-size:17px;margin:0}
+.kicker{font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 10px}
+h2{font-size:clamp(21px,3.4vw,27px);margin:56px 0 6px;letter-spacing:-0.02em;line-height:1.3}
+h3{font-size:18px;margin:34px 0 6px;letter-spacing:-0.015em}
+h4{font-size:15px;margin:22px 0 4px;color:var(--text-secondary)}
+p{margin:12px 0}
+ul,ol{margin:12px 0;padding-left:22px}
+li{margin:6px 0}
+strong{font-weight:650}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.9em;background:var(--wash);padding:1px 5px;border-radius:4px}
+a{color:var(--s1)}
+
+/* ---- level badges ---- */
+.lv{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+  letter-spacing:0.06em;padding:4px 11px;border-radius:999px;border:1px solid var(--border);
+  color:var(--text-secondary);background:var(--surface-1);margin-bottom:2px}
+.lv .dot{width:8px;height:8px;border-radius:50%}
+.lv1 .dot{background:var(--s3)} .lv2 .dot{background:var(--s1)} .lv3 .dot{background:var(--s2)}
+
+/* ---- cards ---- */
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:20px;margin:22px 0}
+.demo{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:18px;margin:24px 0}
+.demo h4{margin:0 0 2px;font-size:15px;color:var(--text-primary);font-weight:650}
+.demo .cap{color:var(--muted);font-size:13px;margin:0 0 14px;line-height:1.6}
+canvas{display:block;width:100%;border-radius:8px;background:var(--surface-1);touch-action:none}
+.scrollx{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.scrollx canvas{min-width:560px}
+.scrollhint{display:none;font-size:11.5px;color:var(--muted);margin:6px 0 0}
+@media (max-width:600px){ .scrollhint{display:block} }
+
+/* ---- controls ---- */
+.ctrls{display:flex;flex-wrap:wrap;gap:14px 22px;margin:14px 0 4px;align-items:flex-end}
+.ctrl{flex:1 1 210px;min-width:170px}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--text-secondary);margin-bottom:4px;gap:10px}
+.ctrl label b{font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:650;font-size:13px}
+input[type=range]{width:100%;accent-color:var(--s1);height:22px;margin:0}
+input[type=text]{width:100%;font:inherit;font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  padding:8px 11px;border-radius:8px;border:1px solid var(--border);background:var(--page);color:var(--text-primary)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+button{font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);transition:background .12s}
+button:hover{background:var(--wash)}
+button.primary{background:var(--s1);border-color:var(--s1);color:#fff}
+button.primary:hover{filter:brightness(1.07)}
+button[aria-pressed=true]{background:var(--wash);border-color:var(--s1);color:var(--text-primary)}
+
+/* ---- legend / status / readout ---- */
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--text-secondary);margin:10px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:650;
+  padding:5px 12px;border-radius:999px;border:1px solid var(--border);margin-top:12px}
+.status .ico{font-size:14px;line-height:1}
+.readout{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:12px;font-size:13px;color:var(--text-secondary)}
+.readout b{display:block;font-size:19px;color:var(--text-primary);font-weight:650;line-height:1.3;letter-spacing:-0.02em}
+
+/* ---- math ---- */
+.math{font-family:"Cambria Math","Latin Modern Math",Georgia,"Times New Roman",serif;
+  font-style:italic;font-size:1.06em;letter-spacing:0}
+.math .op,.math .num,.math .fn{font-style:normal}
+.eq{background:var(--surface-1);border:1px solid var(--border);border-left:3px solid var(--s1);
+  border-radius:0 10px 10px 0;padding:16px 18px 14px;margin:18px 0;overflow-x:auto;text-align:center;line-height:2}
+.eq.f{border-left-color:var(--s2)} .eq.i{border-left-color:var(--s3)} .eq.o{border-left-color:var(--s4)}
+.eq .note{display:block;font-family:system-ui,sans-serif;font-style:normal;font-size:12.5px;
+  color:var(--muted);margin:6px 0 0;padding:0;border:0;line-height:1.55}
+sub,sup{font-size:0.72em;font-style:normal}
+
+/* ---- tables ---- */
+.tw{overflow-x:auto;margin:18px 0;border:1px solid var(--border);border-radius:12px;background:var(--surface-1)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+th{font-weight:650;font-size:12.5px;color:var(--text-secondary);letter-spacing:0.02em;background:var(--page)}
+tr:last-child td{border-bottom:none}
+td.num,th.num{font-variant-numeric:tabular-nums;text-align:right}
+td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* ---- callouts ---- */
+.note{border-left:3px solid var(--axis);padding:2px 0 2px 16px;margin:18px 0;color:var(--text-secondary);font-size:14.5px}
+.key{border:1px solid var(--border);border-left:3px solid var(--s2);background:var(--surface-1);
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:20px 0}
+.key .lbl{font-size:11.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--s2);display:block;margin-bottom:4px}
+.key p{margin:0}
+
+/* ---- toc ---- */
+nav.toc{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin:26px 0}
+nav.toc ol{margin:6px 0 0;padding-left:20px;font-size:14.5px}
+nav.toc a{text-decoration:none;color:var(--text-primary)}
+nav.toc a:hover{color:var(--s1)}
+nav.toc .lvtag{color:var(--muted);font-size:12px;margin-left:6px}
+
+/* ---- quiz ---- */
+.q{border:1px solid var(--border);border-radius:10px;background:var(--surface-1);padding:16px 18px;margin:14px 0}
+.q h4{margin:0 0 8px;font-size:15px;color:var(--text-primary)}
+.q .opt{display:flex;gap:9px;align-items:flex-start;padding:7px 10px;border:1px solid var(--border);
+  border-radius:8px;margin:6px 0;cursor:pointer;font-size:14px;transition:border-color .12s}
+.q .opt:hover{border-color:var(--s1)}
+.q .opt input{margin-top:5px;accent-color:var(--s1)}
+.q .opt.correct{border-color:var(--good);background:rgba(12,163,12,0.08)}
+.q .opt.wrong{border-color:var(--s8);background:rgba(227,73,72,0.07)}
+.q .expl{display:none;font-size:13.5px;color:var(--text-secondary);border-left:3px solid var(--good);
+  padding:2px 0 2px 12px;margin-top:10px;line-height:1.65}
+.q .expl.bad{border-left-color:var(--s8)}
+.q .expl.show{display:block}
+.quiz-score{font-size:15px;font-weight:700;margin-top:14px}
+
+/* ---- misc ---- */
+.tog{position:fixed;top:14px;right:14px;z-index:10;border-radius:999px;padding:7px 13px;
+  background:var(--surface-1);border:1px solid var(--border);font-size:12.5px}
+@media print{.tog{display:none}}
+footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--border);color:var(--muted);font-size:13px}
+footer a{color:var(--text-secondary)}
+.refs{font-size:13px;color:var(--text-secondary);line-height:1.7}
+.refs li{margin:3px 0}
+</style>
+</head>
+<body>
+<button class="tog" id="themeBtn" type="button">◐ 다크</button>
+<div class="wrap">
+
+<header class="hero">
+  <p class="kicker">순환 신경망 · 시퀀스 모델</p>
+  <h1>LSTM은 어떻게 기억하는가</h1>
+  <p class="sub">순환 신경망이 긴 문맥을 잃어버리는 이유부터, 셀 상태와 세 개의 게이트가 그 문제를 어떻게 우회하는지까지. 게이트를 손으로 돌려 보고, 사람이 직접 가중치를 심은 LSTM이 괄호를 세는 과정을 한 글자씩 따라가며 확인합니다.</p>
+</header>
+
+<nav class="toc">
+  <strong>학습 경로</strong>
+  <ol>
+    <li><a href="#rnn">상태를 들고 다니는 신경망 — RNN</a><span class="lvtag">입문</span></li>
+    <li><a href="#gap">먼 과거는 왜 잊히는가</a><span class="lvtag">입문</span></li>
+    <li><a href="#idea">LSTM의 핵심 — 더하기로만 갱신되는 기억</a><span class="lvtag">학부</span></li>
+    <li><a href="#steps">한 스텝을 네 단계로 — 망각·입력·갱신·출력</a><span class="lvtag">학부</span></li>
+    <li><a href="#hand">손으로 가중치를 심어 보기 — 괄호 세는 LSTM</a><span class="lvtag">학부</span></li>
+    <li><a href="#var">변형들 — 핍홀·결합 게이트·GRU</a><span class="lvtag">심화</span></li>
+    <li><a href="#after">그 뒤에 무슨 일이 있었나 — 어텐션과 그 너머</a><span class="lvtag">심화</span></li>
+    <li><a href="#wrap">정리와 퀴즈</a><span class="lvtag">종합</span></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════ 1. RNN ═══════════════ -->
+<h2 id="rnn"><span class="lv lv1"><span class="dot"></span>LEVEL 1 · 입문</span><br>상태를 들고 다니는 신경망</h2>
+
+<p>보통의 신경망은 입력 하나를 받아 출력 하나를 내고 <strong>끝납니다</strong>. 방금 무엇을 봤는지는 남지 않습니다. 영화의 한 장면만 떼어 놓고 “지금 무슨 일이 벌어지는가”를 판정하려는 것과 같습니다. 앞 장면을 모르면 판단할 수 없는 질문이 세상에는 너무 많습니다.</p>
+
+<p>순환 신경망(RNN)은 여기에 아주 작은 장치 하나를 더합니다. <strong>계산 결과의 일부를 다음 입력과 함께 자기 자신에게 돌려주는 것</strong>입니다. 이 되먹임 값이 “지금까지 본 것의 요약”, 즉 <strong>은닉 상태</strong> <span class="math">h</span>입니다.</p>
+
+<div class="eq">
+<span class="math">h<sub>t</sub> <span class="op">=</span> <span class="fn">tanh</span>(W<sub>h</sub> h<sub>t−1</sub> <span class="op">+</span> W<sub>x</sub> x<sub>t</sub> <span class="op">+</span> b)</span>&nbsp;&nbsp;·&nbsp;&nbsp;
+<span class="math">y<sub>t</sub> <span class="op">=</span> W<sub>y</sub> h<sub>t</sub></span>
+<span class="note">x<sub>t</sub> = t번째 입력 · h<sub>t</sub> = t번째까지의 요약 · 모든 스텝이 <strong>같은</strong> W를 쓴다</span>
+</div>
+
+<p>루프가 달린 그림은 신비해 보이지만, 시간축으로 <strong>펼쳐 보면</strong> 정체가 드러납니다. 같은 셀을 복사해 옆으로 이어 붙인 사슬입니다. 파라미터를 공유하기 때문에 입력이 5개든 500개든 같은 셀 하나로 처리할 수 있고, 바로 이 점이 시퀀스 모델로서 RNN의 힘이었습니다.</p>
+
+<div class="demo">
+  <h4>데모 1 — 루프를 펼쳐 보기</h4>
+  <p class="cap">왼쪽 <strong>루프 표기</strong>와 오른쪽 <strong>펼친 사슬</strong>은 완전히 같은 계산입니다. ▶ 재생을 누르면 상태 <span class="math">h</span>가 왼쪽에서 오른쪽으로 전달되는 순서를 따라갑니다.</p>
+  <canvas id="c1" height="250"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s1t">시퀀스 길이 T <b id="v1t">5</b></label>
+      <input type="range" id="s1t" min="2" max="8" step="1" value="5">
+    </div>
+  </div>
+  <div class="btns">
+    <button type="button" id="b1play" class="primary">▶ 재생</button>
+    <button type="button" id="b1reset">처음으로</button>
+  </div>
+  <div id="st1" class="status"></div>
+</div>
+
+<p>2014~2016년 무렵 RNN은 음성 인식, 언어 모델링, 기계 번역, 이미지 캡셔닝, 필기 인식에서 잇달아 성과를 냈습니다. 당시 이 흐름을 가장 널리 알린 글이 Andrej Karpathy의 <a href="https://karpathy.github.io/2015/05/21/rnn-effectiveness/" target="_blank" rel="noopener">The Unreasonable Effectiveness of Recurrent Neural Networks</a>입니다. 그런데 그 성과들의 거의 전부는 순수한 RNN이 아니라 <strong>LSTM</strong>이라는 변형으로 이룬 것이었습니다. 왜 그랬는지가 이 글의 주제입니다.</p>
+
+<!-- ═══════════════ 2. 장기 의존성 ═══════════════ -->
+<h2 id="gap">먼 과거는 왜 잊히는가</h2>
+
+<p>다음 단어를 맞히는 문제를 생각해 봅시다.</p>
+
+<div class="card">
+<p style="margin:0 0 10px"><strong>가까운 문맥으로 충분한 경우</strong><br>
+“구름은 <u>하늘</u>에 떠 있다.” — ‘하늘’을 맞히는 데 필요한 단서는 바로 앞 몇 단어입니다. 거리 1~3.</p>
+<p style="margin:0"><strong>먼 문맥이 필요한 경우</strong><br>
+“나는 <u>프랑스</u>에서 나고 자랐다. … (수십 단어 뒤) … 그래서 나는 <u>프랑스어</u>를 유창하게 한다.” — ‘어떤 언어인가’는 한참 앞 문장에만 있습니다. 거리 30, 50, 100.</p>
+</div>
+
+<p>가까운 경우는 RNN이 잘합니다. 문제는 두 번째입니다. 그리고 이건 <em>표현력</em>의 문제가 아닙니다. 이론적으로는 적절한 W만 주면 RNN도 100스텝 전 정보를 나를 수 있습니다. 문제는 <strong>그 W를 경사 하강법으로 찾아낼 수 없다</strong>는 데 있습니다.</p>
+
+<p>이유는 역전파의 구조에 있습니다. <span class="math">h<sub>t</sub></span>가 <span class="math">h<sub>t−k</sub></span>에 대해 갖는 민감도는 중간 단계들의 야코비안을 <strong>k번 연달아 곱한 것</strong>입니다.</p>
+
+<div class="eq">
+<span class="math">∂h<sub>t</sub> / ∂h<sub>t−k</sub> <span class="op">=</span> ∏<sub>j=1..k</sub> W<sub>h</sub><sup>⊤</sup> · diag(<span class="fn">tanh</span>′)</span>
+&nbsp;&nbsp;⟹&nbsp;&nbsp;
+<span class="math">크기 ≈ λ<sup>k</sup></span>
+<span class="note">λ는 반복해서 곱해지는 행렬의 실효 배율. tanh′ ≤ 1이라 λ &lt; 1이 되기 쉽다.</span>
+</div>
+
+<ul>
+  <li><span class="math">λ &lt; 1</span> → <strong>기울기 소멸</strong>. 신호가 지수적으로 사라져 먼 과거를 “어떻게 고쳐야 할지”가 전달되지 않습니다.</li>
+  <li><span class="math">λ &gt; 1</span> → <strong>기울기 폭발</strong>. 값이 터져 학습이 발산합니다. 이쪽은 클리핑으로 비교적 쉽게 막을 수 있습니다.</li>
+</ul>
+
+<p>이 진단은 Sepp Hochreiter의 1991년 학위논문에서 처음 정리되었고, Yoshua Bengio, Patrice Simard, Paolo Frasconi가 1994년 논문에서 “장기 의존성 학습이 왜 근본적으로 어려운가”를 규명했습니다. <strong>기억이 사라지는 게 아니라 학습 신호가 도달하지 못한다</strong>는 점이 핵심입니다.</p>
+
+<div class="demo">
+  <h4>데모 2 — 신호는 몇 걸음이나 살아남는가</h4>
+  <p class="cap">세로축은 로그 스케일입니다. 배율 <span class="math">λ</span>를 1보다 조금만 낮춰도 파란 곡선(바닐라 RNN)은 순식간에 바닥으로 떨어집니다. 초록 곡선은 LSTM의 셀 상태 경로로, 망각 게이트 <span class="math">f</span>가 그대로 배율이 됩니다. <strong>f를 1.00에 두면 곡선이 평평해집니다</strong> — 100스텝을 가도 신호가 줄지 않는다는 뜻입니다.</p>
+  <canvas id="c2" height="260"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s2l">바닐라 RNN 배율 λ <b id="v2l">0.80</b></label>
+      <input type="range" id="s2l" min="0.5" max="1.1" step="0.01" value="0.8">
+    </div>
+    <div class="ctrl">
+      <label for="s2f">LSTM 망각 게이트 f <b id="v2f">1.00</b></label>
+      <input type="range" id="s2f" min="0.8" max="1" step="0.005" value="1">
+    </div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--s1)"></i>바닐라 RNN — λ<sup>k</sup></span>
+    <span><i style="background:var(--s3)"></i>LSTM 셀 상태 — f<sup>k</sup></span>
+    <span><i style="background:var(--s8)"></i>실질적 소멸선 (10⁻³)</span>
+  </div>
+  <div class="readout">
+    <div>RNN 신호가 1/1000 되는 거리<b id="r2a">—</b></div>
+    <div>LSTM 신호가 1/1000 되는 거리<b id="r2b">—</b></div>
+    <div>거리 100에서의 신호비<b id="r2c">—</b></div>
+  </div>
+</div>
+
+<div class="key"><span class="lbl">문제의 정확한 형태</span><p>RNN의 상태는 매 스텝 <strong>행렬 곱 + tanh 압축</strong>으로 <em>완전히 새로 계산</em>됩니다. 그래서 과거의 흔적이 남으려면 그 곱셈 사슬을 통과해야 하고, 사슬은 지수적으로 감쇠합니다. 해법은 “곱을 잘 조절하자”가 아니라 <strong>“곱셈 사슬을 통과하지 않는 길을 따로 내자”</strong>였습니다.</p></div>
+
+<!-- ═══════════════ 3. 핵심 아이디어 ═══════════════ -->
+<h2 id="idea"><span class="lv lv2"><span class="dot"></span>LEVEL 2 · 학부</span><br>LSTM의 핵심 — 더하기로만 갱신되는 기억</h2>
+
+<p><strong>LSTM(Long Short-Term Memory)</strong>은 Sepp Hochreiter와 Jürgen Schmidhuber가 1997년에 제안했습니다. 처음부터 장기 의존성을 겨냥해 설계된 구조이며, 이후 Felix Gers, Fred Cummins, Santiago Fernández, Justin Bayer, Daan Wierstra, Julian Togelius, Faustino Gomez, Matteo Gagliolo, Alex Graves 등 여러 연구자의 개선이 쌓여 오늘날 우리가 쓰는 형태가 되었습니다.</p>
+
+<p>발상의 전환은 한 문장으로 요약됩니다.</p>
+
+<div class="key"><span class="lbl">한 문장</span><p>상태를 매 스텝 <strong>새로 계산하지 말고</strong>, 그대로 흘려 보내면서 <strong>필요한 만큼만 지우고 필요한 만큼만 더하자.</strong></p></div>
+
+<p>이를 위해 LSTM은 은닉 상태 <span class="math">h<sub>t</sub></span> 외에 <strong>셀 상태</strong> <span class="math">C<sub>t</sub></span>라는 두 번째 상태를 둡니다. 셀 상태는 셀을 관통해 지나가는 별도의 <em>기억 레일</em>입니다. 이 레일 위에서 벌어지는 연산은 딱 두 가지뿐입니다.</p>
+
+<ul>
+  <li><strong>원소별 곱</strong> — 각 성분을 얼마나 남길지 (지우기)</li>
+  <li><strong>원소별 덧셈</strong> — 각 성분에 무엇을 얼마나 더할지 (쓰기)</li>
+</ul>
+
+<p>행렬 곱도, tanh 압축도 없습니다. 그래서 남길 비율이 1에 가까우면 <span class="math">∂C<sub>t</sub>/∂C<sub>t−1</sub> ≈ <span class="num">1</span></span>이 되고, 역전파 신호가 감쇠 없이 수십·수백 스텝을 거슬러 올라갑니다. 몇 년 뒤 ResNet의 스킵 연결이 깊이 방향에서 똑같은 일을 하게 되는데(<a href="https://dev-jonghoonpark.github.io/how-resnet-work/" target="_blank" rel="noopener">how-resnet-work</a>), LSTM은 시간 방향에서 그 아이디어를 먼저 쓴 셈입니다.</p>
+
+<h3>게이트 — 데이터가 스스로 여닫는 밸브</h3>
+
+<p>“얼마나 지울지, 얼마나 쓸지”를 결정하는 장치가 <strong>게이트</strong>입니다. 구조는 놀랍도록 단순합니다. <strong>시그모이드 층 하나 + 원소별 곱 하나.</strong></p>
+
+<div class="eq">
+<span class="math">g <span class="op">=</span> σ(W[h<sub>t−1</sub>, x<sub>t</sub>] <span class="op">+</span> b)</span>&nbsp;&nbsp;∈&nbsp;(<span class="num">0</span>, <span class="num">1</span>)&nbsp;&nbsp;·&nbsp;&nbsp;
+<span class="math">통과량 <span class="op">=</span> g ⊙ 값</span>
+<span class="note">0이면 완전 차단, 1이면 완전 통과, 그 사이면 부분 통과. 성분마다 값이 다르므로 밸브 n개가 독립적으로 열리고 닫힌다.</span>
+</div>
+
+<p>중요한 것은 이 값이 <strong>고정된 상수가 아니라 매 스텝 입력에 따라 다시 계산된다</strong>는 점입니다. “지금 이 단어를 봤으니 3번 성분은 지우고 7번 성분은 유지한다” 같은 판단을 모델이 스스로 학습합니다.</p>
+
+<div class="demo">
+  <h4>데모 3 — 게이트는 밸브다</h4>
+  <p class="cap">왼쪽은 시그모이드 곡선, 오른쪽은 8개 성분을 가진 벡터가 이 밸브를 통과한 결과입니다. 슬라이더는 게이트의 <strong>입력값(활성화 전)</strong>이며, 개별 성분 편차 슬라이더를 올리면 성분마다 밸브가 다르게 열리는 실제 상황이 됩니다.</p>
+  <canvas id="c3" height="230"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s3z">게이트 입력 z <b id="v3z">0.0</b></label>
+      <input type="range" id="s3z" min="-6" max="6" step="0.1" value="0">
+    </div>
+    <div class="ctrl">
+      <label for="s3s">성분별 편차 <b id="v3s">0.0</b></label>
+      <input type="range" id="s3s" min="0" max="4" step="0.1" value="0">
+    </div>
+  </div>
+  <div id="st3" class="status"></div>
+</div>
+
+<p>LSTM 한 스텝에는 이런 층이 <strong>네 개</strong> 들어갑니다. 게이트 세 개(망각·입력·출력)와, 무엇을 쓸지 만드는 후보 생성기 하나(tanh)입니다. 바닐라 RNN이 tanh 층 하나로 끝나는 것과 비교하면 딱 그만큼이 차이의 전부입니다.</p>
+
+<!-- ═══════════════ 4. 네 단계 ═══════════════ -->
+<h2 id="steps">한 스텝을 네 단계로</h2>
+
+<p>표기를 정합니다. 각 층은 이전 은닉 상태와 현재 입력을 이어 붙인 <span class="math">[h<sub>t−1</sub>, x<sub>t</sub>]</span>를 받고, 각자의 가중치 <span class="math">W</span>와 편향 <span class="math">b</span>를 갖습니다. <span class="math">⊙</span>는 원소별 곱입니다.</p>
+
+<h3>① 망각 게이트 — 무엇을 지울 것인가</h3>
+<div class="eq f">
+<span class="math">f<sub>t</sub> <span class="op">=</span> σ(W<sub>f</sub>[h<sub>t−1</sub>, x<sub>t</sub>] <span class="op">+</span> b<sub>f</sub>)</span>
+<span class="note">셀 상태의 각 성분을 <strong>얼마나 남길지</strong>. 0이면 그 기억을 버리고, 1이면 그대로 보존한다.</span>
+</div>
+<p>언어 모델이라면 이런 상황입니다. 셀 어딘가에 “현재 주어는 단수 남성”이라는 정보가 저장돼 있는데, 새 문장의 새 주어가 등장했습니다. 이제 옛 주어 정보는 방해만 되므로 해당 성분을 0으로 밀어 <strong>자리를 비웁니다</strong>.</p>
+
+<h3>② 입력 게이트와 후보 — 무엇을 새로 쓸 것인가</h3>
+<div class="eq i">
+<span class="math">i<sub>t</sub> <span class="op">=</span> σ(W<sub>i</sub>[h<sub>t−1</sub>, x<sub>t</sub>] <span class="op">+</span> b<sub>i</sub>)</span>&nbsp;&nbsp;·&nbsp;&nbsp;
+<span class="math">C̃<sub>t</sub> <span class="op">=</span> <span class="fn">tanh</span>(W<sub>C</sub>[h<sub>t−1</sub>, x<sub>t</sub>] <span class="op">+</span> b<sub>C</sub>)</span>
+<span class="note">쓸지 말지는 i가, 쓸 내용은 C̃가 정한다. 후보가 tanh(−1~1)이므로 더할 수도 뺄 수도 있다.</span>
+</div>
+<p>두 역할을 굳이 나눈 이유가 있습니다. “쓸 만한 값”을 만드는 일과 “지금 그걸 쓸 때인가”를 판단하는 일은 서로 다른 문제이기 때문입니다. 새 주어의 성·수 정보를 만들어 두고(<span class="math">C̃</span>), 방금 비운 자리에 그것을 밀어 넣습니다(<span class="math">i</span>).</p>
+
+<h3>③ 셀 상태 갱신 — 지우기와 쓰기를 한 줄로</h3>
+<div class="eq">
+<span class="math">C<sub>t</sub> <span class="op">=</span> f<sub>t</sub> ⊙ C<sub>t−1</sub> <span class="op">+</span> i<sub>t</sub> ⊙ C̃<sub>t</sub></span>
+<span class="note">앞 항이 “남기기”, 뒤 항이 “더하기”. 이 한 줄이 LSTM 전체에서 가장 중요한 식이다.</span>
+</div>
+<p>여기서 <strong>새 상태를 만드는 데 행렬 곱이 쓰이지 않았다</strong>는 점을 다시 확인해 두세요. 앞 절에서 본 소멸의 원인이 이 경로에는 없습니다.</p>
+
+<h3>④ 출력 게이트 — 무엇을 밖으로 내보낼 것인가</h3>
+<div class="eq o">
+<span class="math">o<sub>t</sub> <span class="op">=</span> σ(W<sub>o</sub>[h<sub>t−1</sub>, x<sub>t</sub>] <span class="op">+</span> b<sub>o</sub>)</span>&nbsp;&nbsp;·&nbsp;&nbsp;
+<span class="math">h<sub>t</sub> <span class="op">=</span> o<sub>t</sub> ⊙ <span class="fn">tanh</span>(C<sub>t</sub>)</span>
+<span class="note">셀에 담긴 내용을 tanh로 −1~1에 맞춘 뒤, 지금 필요한 부분만 골라 내보낸다.</span>
+</div>
+<p>셀에 있는 것을 전부 내보내지 않는다는 점이 포인트입니다. 주어가 단수인지 복수인지는 <em>동사를 낼 차례</em>에만 꺼내면 됩니다. 그때까지는 셀 안에 조용히 보관해 두었다가, 필요한 스텝에서 출력 게이트를 열어 꺼냅니다.</p>
+
+<div class="key"><span class="lbl">C와 h를 나눈 이유</span><p><span class="math">C</span>는 <strong>장부</strong>입니다 — 길게 보관하는 기억, 밖으로 직접 나가지 않음. <span class="math">h</span>는 <strong>이번 스텝의 답변</strong>입니다 — 위층으로 올라가고, 다음 스텝의 게이트를 결정하는 입력이 됨. 하나의 상태로 이 두 역할을 겸하게 하면, 지금 출력하고 싶지 않은 정보까지 매번 드러나게 됩니다.</p></div>
+
+<div class="demo">
+  <h4>데모 4 — 셀 한 스텝 따라가기</h4>
+  <p class="cap">단계 버튼을 누르면 해당 계산에 참여하는 경로만 밝게 표시됩니다. 위쪽 굵은 가로선이 <strong>셀 상태 레일</strong>이고, 그 위에는 ⊗(지우기)와 ⊕(더하기)만 놓여 있다는 점을 확인해 보세요.</p>
+  <div class="scrollx"><canvas id="c4" height="330"></canvas></div>
+  <p class="scrollhint">↔ 그림이 잘려 보이면 가로로 밀어서 볼 수 있습니다.</p>
+  <div class="btns">
+    <button type="button" class="stepbtn" data-step="0">전체</button>
+    <button type="button" class="stepbtn" data-step="1">① 망각 f</button>
+    <button type="button" class="stepbtn" data-step="2">② 입력 i·C̃</button>
+    <button type="button" class="stepbtn" data-step="3">③ 갱신 C</button>
+    <button type="button" class="stepbtn" data-step="4">④ 출력 o·h</button>
+  </div>
+  <div id="st4" class="status"></div>
+</div>
+
+<div class="demo">
+  <h4>데모 5 — 게이트 조작기</h4>
+  <p class="cap">성분 하나만 떼어 놓고 숫자로 확인합니다. 프리셋을 눌러 게이트 조합이 만드는 <strong>네 가지 기본 동작</strong>을 먼저 보고, 오른쪽 그래프에서 그 설정을 20스텝 반복했을 때 기억이 어떻게 변하는지 확인하세요.</p>
+  <canvas id="c5" height="240"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s5c">이전 셀 상태 C<sub>t−1</sub> <b id="v5c">1.00</b></label>
+      <input type="range" id="s5c" min="-2" max="2" step="0.05" value="1">
+    </div>
+    <div class="ctrl">
+      <label for="s5f">망각 게이트 f <b id="v5f">1.00</b></label>
+      <input type="range" id="s5f" min="0" max="1" step="0.01" value="1">
+    </div>
+    <div class="ctrl">
+      <label for="s5i">입력 게이트 i <b id="v5i">0.00</b></label>
+      <input type="range" id="s5i" min="0" max="1" step="0.01" value="0">
+    </div>
+    <div class="ctrl">
+      <label for="s5g">후보 C̃ <b id="v5g">0.50</b></label>
+      <input type="range" id="s5g" min="-1" max="1" step="0.01" value="0.5">
+    </div>
+    <div class="ctrl">
+      <label for="s5o">출력 게이트 o <b id="v5o">1.00</b></label>
+      <input type="range" id="s5o" min="0" max="1" step="0.01" value="1">
+    </div>
+  </div>
+  <div class="btns">
+    <button type="button" data-p="keep">기억 유지 (f=1, i=0)</button>
+    <button type="button" data-p="write">덮어쓰기 (f=0, i=1)</button>
+    <button type="button" data-p="erase">지우기 (f=0, i=0)</button>
+    <button type="button" data-p="accum">누적 (f=1, i=1)</button>
+    <button type="button" data-p="leak">새는 기억 (f=0.9)</button>
+  </div>
+  <div class="readout">
+    <div>C<sub>t</sub> = f·C<sub>t−1</sub> + i·C̃<b id="r5c">—</b></div>
+    <div>h<sub>t</sub> = o·tanh(C<sub>t</sub>)<b id="r5h">—</b></div>
+    <div>20스텝 뒤 C<b id="r5k">—</b></div>
+  </div>
+  <div id="st5" class="status"></div>
+</div>
+
+<h3>파라미터는 몇 개인가</h3>
+<p>층이 네 개이고 각 층은 <span class="math">[h<sub>t−1</sub>, x<sub>t</sub>]</span>(차원 <span class="math">n<span class="op">+</span>m</span>)를 받아 <span class="math">n</span>차원을 내므로, 총 파라미터는 아래와 같습니다. 같은 은닉 크기라면 바닐라 RNN의 <strong>정확히 4배</strong>입니다.</p>
+<div class="eq">
+<span class="math"><span class="num">4</span> · (n·m <span class="op">+</span> n·n <span class="op">+</span> n)</span>
+<span class="note">m = 입력 차원, n = 은닉 차원. 게이트 3개 + 후보 1개 = 4</span>
+</div>
+
+<!-- ═══════════════ 5. 손으로 심기 ═══════════════ -->
+<h2 id="hand">손으로 가중치를 심어 보기 — 괄호 세는 LSTM</h2>
+
+<p>“셀 상태가 기억을 나른다”는 말을 확인하는 가장 빠른 방법은, 학습을 시키는 대신 <strong>사람이 직접 게이트 값을 정해 보는 것</strong>입니다. 아래 규칙은 학습된 가중치가 아니라 우리가 손으로 심은 것이지만, 계산 자체는 앞 절의 네 식을 그대로 따릅니다.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>입력 문자</th><th class="num">f</th><th class="num">i</th><th class="num">C̃</th><th>결과</th></tr></thead>
+<tbody>
+<tr><td class="mono">(</td><td class="num">1</td><td class="num">1</td><td class="num">+1</td><td>깊이 +1 — 자리를 유지한 채 더한다</td></tr>
+<tr><td class="mono">)</td><td class="num">1</td><td class="num">1</td><td class="num">−1</td><td>깊이 −1 — 후보가 음수면 빼기가 된다</td></tr>
+<tr><td class="mono">.</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td>문장 끝 — 망각 게이트를 닫아 장부를 <strong>초기화</strong></td></tr>
+<tr><td>그 밖의 문자</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td>아무 일도 하지 않음 — 기억은 그대로 통과</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>이 네 줄이면 끝입니다. 셀 상태 <span class="math">C</span>는 정확히 “지금 열려 있는 괄호의 개수”가 되고, 문자가 100개든 1,000개든 값이 흐려지지 않습니다. 세는 데 필요했던 것은 정교한 곱셈이 아니라 <strong>지워지지 않는 덧셈 자리</strong>였습니다.</p>
+
+<div class="demo">
+  <h4>데모 6 — 한 글자씩 실행하기</h4>
+  <p class="cap">문자열을 직접 고쳐 보세요. 위 그래프는 <span style="color:var(--s1);font-weight:650">LSTM 셀 상태 C</span>(괄호 깊이)이고, 아래는 매 스텝의 게이트 값입니다. 회색 점선은 <strong>같은 신호를 tanh로 압축하는 바닐라식 상태</strong>로, ±1에서 포화되어 깊이 2와 4를 구별하지 못합니다.</p>
+  <div class="scrollx"><canvas id="c6" height="300"></canvas></div>
+  <p class="scrollhint">↔ 문자열이 길면 가로로 밀어서 볼 수 있습니다.</p>
+  <div class="ctrls">
+    <div class="ctrl" style="flex:1 1 100%">
+      <label for="i6">입력 문자열</label>
+      <input type="text" id="i6" value="f(g(x), h(y)). a(b(c(d)))" spellcheck="false">
+    </div>
+  </div>
+  <div class="btns">
+    <button type="button" data-t="f(g(x), h(y)). a(b(c(d)))">중첩 + 리셋</button>
+    <button type="button" data-t="((((((((abc))))))))">깊이 8</button>
+    <button type="button" data-t="(a(b)c. (d(e(f">닫히지 않은 괄호</button>
+    <button type="button" id="b6step" class="primary">▶ 한 글자씩</button>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--s1)"></i>셀 상태 C (깊이)</span>
+    <span><i style="background:var(--s2)"></i>망각 f</span>
+    <span><i style="background:var(--s3)"></i>입력 i</span>
+    <span><i style="background:var(--muted)"></i>tanh 압축 상태</span>
+  </div>
+  <div id="st6" class="status"></div>
+  <div class="readout">
+    <div>최종 깊이<b id="r6d">—</b></div>
+    <div>도달한 최대 깊이<b id="r6m">—</b></div>
+    <div>tanh 상태의 최대값<b id="r6t">—</b></div>
+  </div>
+</div>
+
+<div class="note">실제로 학습된 LSTM에서도 이런 <strong>해석 가능한 성분</strong>이 관찰됩니다. Karpathy, Johnson, Fei-Fei(2015)는 문자 단위 LSTM에서 따옴표 안인지 밖인지를 추적하는 셀, 줄 길이를 세는 셀, 코드의 들여쓰기 깊이에 반응하는 셀을 찾아냈습니다. 우리가 손으로 심은 것과 같은 종류의 회로를 모델이 스스로 만들어 낸 것입니다.</div>
+
+<!-- ═══════════════ 6. 변형 ═══════════════ -->
+<h2 id="var"><span class="lv lv3"><span class="dot"></span>LEVEL 3 · 심화</span><br>변형들</h2>
+
+<p>지금까지 본 것은 가장 표준적인 형태입니다. 실무와 논문에서 마주치게 될 주요 변형을 정리합니다.</p>
+
+<h3>① 핍홀 연결 (peephole)</h3>
+<p>Gers와 Schmidhuber가 2000년에 제안했습니다. 기본형에서 게이트는 <span class="math">h<sub>t−1</sub></span>와 <span class="math">x<sub>t</sub></span>만 보고 결정을 내리는데, 정작 <em>자기가 조작하려는 대상</em>인 셀 상태는 보지 못합니다. 핍홀은 게이트 입력에 셀 상태를 직접 끼워 넣어 이 “구멍”을 냅니다.</p>
+<div class="eq">
+<span class="math">f<sub>t</sub> <span class="op">=</span> σ(W<sub>f</sub>[<span style="color:var(--s2)">C<sub>t−1</sub></span>, h<sub>t−1</sub>, x<sub>t</sub>] <span class="op">+</span> b<sub>f</sub>)</span>
+<span class="note">망각·입력 게이트는 C<sub>t−1</sub>을, 출력 게이트는 이미 갱신된 C<sub>t</sub>를 본다. 세 게이트 전부가 아니라 일부에만 넣는 변종도 흔하다.</span>
+</div>
+<p>타이밍이 중요한 과제(정확한 간격을 세어야 하는 문제 등)에서 이득이 보고되었습니다.</p>
+
+<h3>② 망각·입력 게이트 결합</h3>
+<p>“무엇을 지울지”와 “무엇을 쓸지”를 따로 정하는 대신 <strong>한 번에</strong> 정합니다. 자리를 비울 때만 새것을 쓰고, 유지할 때는 새것을 쓰지 않는다는 규칙입니다.</p>
+<div class="eq">
+<span class="math">C<sub>t</sub> <span class="op">=</span> f<sub>t</sub> ⊙ C<sub>t−1</sub> <span class="op">+</span> (<span class="num">1</span> <span class="op">−</span> f<sub>t</sub>) ⊙ C̃<sub>t</sub></span>
+<span class="note">게이트 층이 하나 줄어 파라미터와 계산이 절약된다.</span>
+</div>
+
+<h3>③ GRU (Gated Recurrent Unit)</h3>
+<p>Cho 등이 2014년에 제안한, 지금까지 나온 단순화 중 가장 널리 쓰이는 형태입니다. 두 가지를 과감하게 정리했습니다. <strong>셀 상태와 은닉 상태를 하나로 합치고</strong>, <strong>망각과 입력을 업데이트 게이트 하나로 묶었습니다</strong>. 여기에 “과거 상태를 얼마나 참고해 후보를 만들지” 정하는 리셋 게이트가 더해집니다.</p>
+<div class="eq">
+<span class="math">z<sub>t</sub> <span class="op">=</span> σ(W<sub>z</sub>[h<sub>t−1</sub>, x<sub>t</sub>])</span>&nbsp;·&nbsp;
+<span class="math">r<sub>t</sub> <span class="op">=</span> σ(W<sub>r</sub>[h<sub>t−1</sub>, x<sub>t</sub>])</span><br>
+<span class="math">h̃<sub>t</sub> <span class="op">=</span> <span class="fn">tanh</span>(W[r<sub>t</sub> ⊙ h<sub>t−1</sub>, x<sub>t</sub>])</span>&nbsp;·&nbsp;
+<span class="math">h<sub>t</sub> <span class="op">=</span> (<span class="num">1</span><span class="op">−</span>z<sub>t</sub>) ⊙ h<sub>t−1</sub> <span class="op">+</span> z<sub>t</sub> ⊙ h̃<sub>t</sub></span>
+<span class="note">z = 업데이트 게이트(망각+입력), r = 리셋 게이트. 게이트 2개, 상태 1개.</span>
+</div>
+<p>상태가 하나뿐이라 “장부와 답변의 분리”는 사라졌지만, 마지막 줄이 여전히 <strong>가중 평균 형태의 덧셈 갱신</strong>이라는 점은 같습니다. 소멸을 막는 핵심 성질은 그대로 유지한 셈입니다. 파라미터는 LSTM의 3/4입니다.</p>
+
+<div class="demo">
+  <h4>데모 7 — 구조와 파라미터 비교</h4>
+  <p class="cap">같은 입력·은닉 차원에서 세 구조의 파라미터 수를 비교합니다. 은닉 차원을 키우면 <span class="math">n<sup>2</sup></span> 항이 지배하면서 셋의 비율이 4 : 3 : 1로 수렴합니다.</p>
+  <canvas id="c7" height="230"></canvas>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s7m">입력 차원 m <b id="v7m">128</b></label>
+      <input type="range" id="s7m" min="8" max="1024" step="8" value="128">
+    </div>
+    <div class="ctrl">
+      <label for="s7n">은닉 차원 n <b id="v7n">256</b></label>
+      <input type="range" id="s7n" min="8" max="1024" step="8" value="256">
+    </div>
+  </div>
+  <div class="readout">
+    <div>LSTM<b id="r7l">—</b></div>
+    <div>GRU<b id="r7g">—</b></div>
+    <div>바닐라 RNN<b id="r7r">—</b></div>
+    <div>GRU / LSTM<b id="r7ratio">—</b></div>
+  </div>
+</div>
+
+<h3>④ 그 밖의 방향</h3>
+<ul>
+  <li><strong>Depth Gated RNN</strong> (Yao 등, 2015) — 시간 방향뿐 아니라 <em>층과 층 사이</em>에도 게이트를 두어, 깊이 방향의 정보 흐름을 조절합니다.</li>
+  <li><strong>Clockwork RNN</strong> (Koutník 등, 2014) — 은닉 유닛을 여러 그룹으로 나누고 <em>그룹마다 다른 주기</em>로만 갱신합니다. 느리게 도는 그룹이 자연스럽게 장기 정보를 담게 되는, 게이트와는 전혀 다른 접근입니다.</li>
+</ul>
+
+<h3>그래서 무엇이 제일 좋은가</h3>
+<p>이 질문에는 두 편의 대규모 실험이 답을 냈습니다.</p>
+<ul>
+  <li><strong>Greff 등 (2015)</strong> — 널리 쓰이는 변형 여덟 가지를 같은 조건에서 비교한 결과, <strong>성능 차이는 사실상 없었습니다</strong>. 다만 망각 게이트와 출력 활성화는 빼면 확실히 나빠지는 <em>필수 부품</em>이었습니다.</li>
+  <li><strong>Jozefowicz 등 (2015)</strong> — 1만 개가 넘는 RNN 구조를 자동 탐색해, 특정 과제에서 LSTM보다 나은 구조들을 찾아냈습니다. 그러나 <em>모든</em> 과제에서 이기는 구조는 없었습니다. 실용적으로 가장 유명한 결론은 따로 있는데, <strong>망각 게이트의 편향을 1 정도로 초기화하라</strong>는 것입니다. 학습 초기에 게이트를 열어 둬야 기억 레일이 살아 있는 상태에서 학습이 시작되기 때문입니다.</li>
+</ul>
+
+<div class="key"><span class="lbl">정리</span><p>변형은 많지만 <strong>“게이트로 조절되는 덧셈형 상태”</strong>라는 뼈대는 모두 같습니다. 실무에서는 LSTM과 GRU 중 아무거나 골라도 대개 무방하고, 파라미터·속도가 아쉬우면 GRU, 안전한 기본값이 필요하면 LSTM(망각 편향 1)이 무난합니다.</p></div>
+
+<!-- ═══════════════ 7. 그 이후 ═══════════════ -->
+<h2 id="after">그 뒤에 무슨 일이 있었나</h2>
+
+<p>LSTM은 “상태 하나를 잘 유지하는 법”에 대한 답이었습니다. 다음 큰 걸음은 질문 자체를 바꿉니다. <strong>왜 모든 것을 상태 하나에 욱여넣어야 하는가?</strong></p>
+
+<p><strong>어텐션(attention)</strong>의 발상이 그것입니다. 매 스텝 하나의 요약 벡터에 의존하는 대신, 지금까지의 모든 정보에 접근해 <em>그때그때 필요한 곳을 골라 보게</em> 합니다. Xu 등(2015)의 이미지 캡셔닝은 이를 눈으로 보여 준 초기 사례입니다. 모델이 단어 하나를 생성할 때마다 이미지의 어느 부분을 보고 있는지가 그대로 드러납니다.</p>
+
+<p>같은 시기의 다른 갈래들도 있었습니다.</p>
+<ul>
+  <li><strong>Grid LSTM</strong> (Kalchbrenner 등, 2015) — 시간축 하나가 아니라 여러 축(깊이·공간)으로 LSTM을 확장합니다.</li>
+  <li><strong>생성 모델과의 결합</strong> — Gregor 등(2015)의 DRAW, Chung 등(2015)의 variational RNN, Bayer & Osendorfer(2015) 등은 RNN에 확률적 잠재 변수를 결합했습니다.</li>
+</ul>
+
+<p>그리고 2017년, Transformer는 순환 자체를 걷어내고 어텐션만 남겼습니다(<a href="https://dev-jonghoonpark.github.io/how-attention-works/" target="_blank" rel="noopener">how-attention-works</a>). 그렇다면 LSTM을 지금 배울 이유가 있을까요? 있습니다. <strong>게이트로 조절되는 덧셈형 상태</strong>라는 아이디어는 사라지지 않고 계속 재등장합니다. ResNet의 스킵 연결, Highway Network, GLU 계열의 게이팅, 그리고 최근 상태공간 모델(Mamba 등)의 선택적 상태 갱신까지 — 모두 같은 뿌리에서 나온 장치들입니다.</p>
+
+<!-- ═══════════════ 8. 정리 + 퀴즈 ═══════════════ -->
+<h2 id="wrap">핵심 정리</h2>
+
+<div class="card">
+<ol>
+<li><strong>RNN</strong>은 상태 <span class="math">h</span>를 다음 스텝으로 넘겨 문맥을 유지한다. 펼치면 파라미터를 공유하는 사슬이다.</li>
+<li><strong>장기 의존성이 어려운 이유</strong>는 표현력이 아니라 최적화다. 같은 야코비안이 k번 곱해져 신호가 <span class="math">λ<sup>k</sup></span>로 사라진다.</li>
+<li><strong>셀 상태 <span class="math">C</span></strong>는 원소별 곱과 덧셈만 거치는 별도의 기억 레일이다. 그래서 <span class="math">∂C<sub>t</sub>/∂C<sub>t−1</sub> <span class="op">=</span> f</span>가 되고, <span class="math">f≈<span class="num">1</span></span>이면 신호가 감쇠하지 않는다.</li>
+<li><strong>게이트</strong>는 시그모이드 + 원소별 곱. 매 스텝 입력에 따라 다시 계산되는 데이터 의존적 밸브다.</li>
+<li><strong>네 단계</strong>: 망각 <span class="math">f</span> → 입력 <span class="math">i</span>·후보 <span class="math">C̃</span> → 갱신 <span class="math">C<sub>t</sub> <span class="op">=</span> f⊙C<sub>t−1</sub><span class="op">+</span>i⊙C̃</span> → 출력 <span class="math">h<sub>t</sub> <span class="op">=</span> o⊙tanh(C<sub>t</sub>)</span>.</li>
+<li><strong>C와 h의 분리</strong> — C는 보관용 장부, h는 이번 스텝의 답변이자 다음 게이트의 입력.</li>
+<li><strong>변형</strong>(핍홀·결합 게이트·GRU)은 성능이 대체로 비등하다. 망각 게이트와 출력 활성화는 빼면 안 되는 필수 부품이고, 망각 편향은 1 근처로 초기화한다.</li>
+<li><strong>다음 걸음</strong>은 어텐션 — 상태 하나를 잘 지키는 대신, 필요한 정보를 그때그때 골라 본다.</li>
+</ol>
+</div>
+
+<h3>이해도 확인</h3>
+<div id="quiz"></div>
+<p class="quiz-score" id="quizScore"></p>
+
+<footer>
+<p><strong>이 자료에 대하여</strong><br>
+Christopher Olah의 <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks</a>(2015)가 다루는 개념과 설명 순서를 참고해, 본문·그림·데모를 한국어 학습용으로 새로 작성했습니다. 더 깊이 알아보려면 원문을 함께 읽어 보시길 권합니다.</p>
+<p><strong>참고 문헌</strong></p>
+<ul class="refs">
+<li>Hochreiter (1991), <em>Untersuchungen zu dynamischen neuronalen Netzen</em> — 기울기 소멸의 최초 분석</li>
+<li>Bengio, Simard &amp; Frasconi (1994), <em>Learning long-term dependencies with gradient descent is difficult</em></li>
+<li>Hochreiter &amp; Schmidhuber (1997), <em>Long Short-Term Memory</em></li>
+<li>Gers &amp; Schmidhuber (2000), <em>Recurrent nets that time and count</em> — 핍홀 연결</li>
+<li>Cho 등 (2014), <em>Learning Phrase Representations using RNN Encoder–Decoder</em> — GRU</li>
+<li>Koutník 등 (2014), <em>A Clockwork RNN</em></li>
+<li>Karpathy, Johnson &amp; Fei-Fei (2015), <em>Visualizing and Understanding Recurrent Networks</em></li>
+<li>Yao 등 (2015), <em>Depth-Gated LSTM</em></li>
+<li>Greff 등 (2015), <em>LSTM: A Search Space Odyssey</em></li>
+<li>Jozefowicz, Zaremba &amp; Sutskever (2015), <em>An Empirical Exploration of Recurrent Network Architectures</em></li>
+<li>Xu 등 (2015), <em>Show, Attend and Tell</em> — 어텐션 기반 이미지 캡셔닝</li>
+<li>Kalchbrenner 등 (2015), <em>Grid Long Short-Term Memory</em></li>
+<li>Gregor 등 (2015) <em>DRAW</em> · Chung 등 (2015) <em>A Recurrent Latent Variable Model</em> · Bayer &amp; Osendorfer (2015) <em>Learning Stochastic Recurrent Networks</em></li>
+</ul>
+<p style="margin-top:18px"><a href="https://github.com/dev-jonghoonpark/how-ai-works">how-ai-works</a> 시리즈 · 인터랙티브 데모 7종 · 모든 수치는 브라우저에서 실시간으로 계산됩니다.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ────────── 공통 ────────── */
+function $(s){ return document.querySelector(s); }
+function C(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function fit(cv){
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if(!cv.dataset.baseH) cv.dataset.baseH = cv.getAttribute('height');
+  var w = cv.clientWidth, h = parseInt(cv.dataset.baseH, 10);
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  cv.style.height = h + 'px';
+  var g = cv.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,w,h);
+  return {g:g, w:w, h:h};
+}
+function label(g,t,x,y,col,size,align){
+  g.fillStyle = col; g.font = (size||11)+'px system-ui,-apple-system,sans-serif';
+  g.textAlign = align||'left'; g.textBaseline='alphabetic'; g.fillText(t,x,y);
+}
+function mono(g,t,x,y,col,size,align){
+  g.fillStyle = col; g.font = (size||11)+'px ui-monospace,SFMono-Regular,Menlo,monospace';
+  g.textAlign = align||'left'; g.textBaseline='alphabetic'; g.fillText(t,x,y);
+}
+function dot(g,x,y,r,fill,ring){
+  g.beginPath(); g.arc(x,y,r,0,6.2832);
+  g.fillStyle = fill; g.fill();
+  if(ring){ g.lineWidth = 2; g.strokeStyle = ring; g.stroke(); }
+}
+function rrect(g,x,y,w,h,r){
+  g.beginPath();
+  if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h);
+}
+function line(g,x1,y1,x2,y2,col,lw,dash){
+  g.save();
+  if(dash) g.setLineDash(dash);
+  g.strokeStyle=col; g.lineWidth=lw||1.5;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke();
+  g.restore();
+}
+function arrow(g,x1,y1,x2,y2,col,lw){
+  line(g,x1,y1,x2,y2,col,lw);
+  var a=Math.atan2(y2-y1,x2-x1), s=5.5;
+  g.fillStyle=col; g.beginPath();
+  g.moveTo(x2,y2);
+  g.lineTo(x2-s*Math.cos(a-0.42), y2-s*Math.sin(a-0.42));
+  g.lineTo(x2-s*Math.cos(a+0.42), y2-s*Math.sin(a+0.42));
+  g.closePath(); g.fill();
+}
+function setStatus(el, kind, text){
+  var map = {ok:['var(--good)','✓'], warn:['var(--warn)','◈'], bad:['var(--s8)','✕'], info:['var(--s1)','●']};
+  var m = map[kind];
+  el.style.color = m[0]; el.style.borderColor = m[0];
+  el.innerHTML = '<span class="ico">'+m[1]+'</span>'+text;
+}
+function fmt(n){ return Math.round(n).toLocaleString('ko-KR'); }
+function sigmoid(z){ return 1/(1+Math.exp(-z)); }
+
+/* ────────── 테마 ────────── */
+var tbtn = $('#themeBtn');
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+  document.documentElement.setAttribute('data-theme','dark');
+}
+function syncBtn(){
+  var d = document.documentElement.getAttribute('data-theme') === 'dark';
+  tbtn.textContent = d ? '◑ 라이트' : '◐ 다크';
+}
+tbtn.addEventListener('click', function(){
+  var d = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark');
+  syncBtn(); drawAll();
+});
+syncBtn();
+
+/* ══════════════ 데모 1 : 루프 펼치기 ══════════════ */
+var c1=$('#c1'), s1t=$('#s1t'), anim1={on:false, i:0, t:0};
+function draw1(){
+  var T=+s1t.value;
+  $('#v1t').textContent=T;
+  var e=fit(c1), g=e.g, w=e.w, h=e.h;
+  var narrow = w<560;
+  var leftW = narrow ? 0 : Math.min(160, w*0.24);
+  var cy = h*0.46;
+
+  if(!narrow){
+    /* 루프 표기 */
+    var bx=leftW*0.5, bw=52, bh=42;
+    label(g,'루프 표기', 6, 18, C('--muted'), 11.5);
+    rrect(g,bx-bw/2, cy-bh/2, bw, bh, 8);
+    g.fillStyle=C('--wash'); g.fill();
+    g.strokeStyle=C('--s1'); g.lineWidth=1.6; g.stroke();
+    label(g,'A', bx, cy+5, C('--s1'), 16, 'center');
+    arrow(g,bx, cy+bh/2+30, bx, cy+bh/2+4, C('--text-secondary'),1.5);
+    label(g,'x', bx-4, cy+bh/2+44, C('--text-secondary'), 12, 'center');
+    arrow(g,bx, cy-bh/2-4, bx, cy-bh/2-30, C('--text-secondary'),1.5);
+    label(g,'h', bx-4, cy-bh/2-34, C('--text-secondary'), 12, 'center');
+    /* 자기 루프 */
+    g.strokeStyle=C('--s2'); g.lineWidth=1.8;
+    g.beginPath();
+    g.moveTo(bx+bw/2, cy-8);
+    g.bezierCurveTo(bx+bw/2+34, cy-30, bx+bw/2+34, cy+30, bx+bw/2, cy+8);
+    g.stroke();
+    arrow(g,bx+bw/2+6, cy+9, bx+bw/2-1, cy+7, C('--s2'),1.8);
+    label(g,'상태', bx+bw/2+38, cy+4, C('--s2'), 11);
+    line(g,leftW+14, 18, leftW+14, h-18, C('--border'), 1, [4,4]);
+  }
+
+  /* 펼친 사슬 */
+  var x0=leftW+ (narrow?18:34), x1=w-14;
+  var span=(x1-x0)/T;
+  var bw2=Math.min(46, span*0.6), bh2=40;
+  label(g, narrow?'펼친 사슬':'같은 셀을 시간축으로 펼친 것', leftW+(narrow?6:22), 18, C('--muted'), 11.5);
+  var shown = anim1.on ? anim1.i : T;
+  for(var t=0;t<T;t++){
+    var cx=x0+span*(t+0.5);
+    var on = t<shown;
+    var col = on ? C('--s1') : C('--axis');
+    /* 상태 화살표 */
+    if(t>0){
+      var pc=x0+span*(t-0.5);
+      arrow(g, pc+bw2/2, cy, cx-bw2/2-2, cy, (t<shown)?C('--s2'):C('--axis'), (t<shown)?2:1.2);
+      if(span>52) label(g,'h'+(t-1), (pc+cx)/2, cy-8, (t<shown)?C('--s2'):C('--muted'), 10.5, 'center');
+    } else {
+      arrow(g, x0-14, cy, cx-bw2/2-2, cy, C('--axis'), 1.2);
+    }
+    rrect(g, cx-bw2/2, cy-bh2/2, bw2, bh2, 8);
+    g.fillStyle = on ? C('--wash') : C('--surface-1'); g.fill();
+    g.strokeStyle=col; g.lineWidth= on?1.8:1.2; g.stroke();
+    label(g,'A', cx, cy+5, col, 15, 'center');
+    /* 입력 */
+    arrow(g, cx, cy+bh2/2+28, cx, cy+bh2/2+4, on?C('--text-secondary'):C('--axis'), 1.4);
+    label(g,'x'+t, cx, cy+bh2/2+44, on?C('--text-primary'):C('--muted'), 11.5, 'center');
+    /* 출력 */
+    arrow(g, cx, cy-bh2/2-4, cx, cy-bh2/2-28, on?C('--text-secondary'):C('--axis'), 1.4);
+    label(g,'h'+t, cx, cy-bh2/2-34, on?C('--text-primary'):C('--muted'), 11.5, 'center');
+  }
+  var st=$('#st1');
+  if(anim1.on && anim1.i>0 && anim1.i<=T){
+    var k=anim1.i-1;
+    setStatus(st,'info', k===0 ? 't=0 — 초기 상태와 x₀로 h₀을 계산'
+      : 't='+k+' — 직전 상태 h'+(k-1)+'와 새 입력 x'+k+'로 h'+k+'를 계산');
+  } else {
+    setStatus(st,'ok','모든 스텝이 같은 셀 A(같은 W)를 사용합니다 — 길이가 달라도 파라미터는 그대로');
+  }
+}
+s1t.addEventListener('input', function(){ anim1.on=false; draw1(); });
+$('#b1play').addEventListener('click', function(){
+  anim1.on=true; anim1.i=0; anim1.t=performance.now(); requestAnimationFrame(step1);
+});
+$('#b1reset').addEventListener('click', function(){ anim1.on=false; draw1(); });
+function step1(now){
+  if(!anim1.on) return;
+  if(now-anim1.t>560){ anim1.i++; anim1.t=now; }
+  draw1();
+  if(anim1.i> +s1t.value){ anim1.on=false; draw1(); return; }
+  requestAnimationFrame(step1);
+}
+
+/* ══════════════ 데모 2 : 신호 감쇠 ══════════════ */
+var c2=$('#c2'), s2l=$('#s2l'), s2f=$('#s2f');
+function draw2(){
+  var lam=+s2l.value, f=+s2f.value;
+  $('#v2l').textContent=lam.toFixed(2);
+  $('#v2f').textContent=f.toFixed(3);
+  var e=fit(c2), g=e.g, w=e.w, h=e.h;
+  var pl=52, pr=14, pt=16, pb=38, K=100;
+  var lgl=-8, lgh=1;
+  var X=function(k){ return pl+k/K*(w-pl-pr); };
+  var Y=function(v){ var t=(Math.log10(Math.max(v,1e-9))-lgl)/(lgh-lgl); return h-pb-t*(h-pb-pt); };
+  for(var d=lgl; d<=lgh; d++){
+    g.strokeStyle=C('--grid'); g.lineWidth=1;
+    g.beginPath(); g.moveTo(pl,Y(Math.pow(10,d))); g.lineTo(w-pr,Y(Math.pow(10,d))); g.stroke();
+    if(d%2!==0) continue;
+    var s=String(d).replace('-','⁻').replace(/[0-9]/g,function(ch){return '⁰¹²³⁴⁵⁶⁷⁸⁹'[+ch];});
+    label(g,'10'+s, pl-7, Y(Math.pow(10,d))+4, C('--muted'), 10, 'end');
+  }
+  g.strokeStyle=C('--axis'); g.lineWidth=1;
+  g.beginPath(); g.moveTo(pl,h-pb); g.lineTo(w-pr,h-pb); g.stroke();
+  for(var k=0;k<=K;k+=20) label(g,String(k), X(k), h-20, C('--muted'), 10, 'center');
+  label(g,'거리 k — 몇 스텝 전의 정보인가', pl, h-5, C('--muted'), 10.5);
+  /* 소멸선 */
+  line(g,pl,Y(1e-3),w-pr,Y(1e-3),C('--s8'),1.2,[5,4]);
+  label(g,'실질적 소멸선', pl+6, Y(1e-3)-6, C('--s8'), 10.5);
+
+  [{r:lam,c:'--s1'},{r:f,c:'--s3'}].forEach(function(o){
+    g.strokeStyle=C(o.c); g.lineWidth=2.4; g.beginPath();
+    for(var k2=0;k2<=K;k2++){
+      var v=Math.pow(o.r,k2), yy=Y(v);
+      yy=Math.max(-200,Math.min(h+200,yy));
+      if(k2===0) g.moveTo(X(k2),yy); else g.lineTo(X(k2),yy);
+    }
+    g.stroke();
+  });
+  function reach(r){
+    if(r>=1) return '도달 안 함';
+    return Math.ceil(Math.log(1e-3)/Math.log(r))+' 스텝';
+  }
+  $('#r2a').textContent = reach(lam);
+  $('#r2b').textContent = reach(f);
+  var a=Math.pow(lam,100), b=Math.pow(f,100);
+  $('#r2c').textContent = (a>0? (b/a).toExponential(1) : '∞') + ' 배';
+}
+[s2l,s2f].forEach(function(el){ el.addEventListener('input', draw2); });
+
+/* ══════════════ 데모 3 : 게이트 밸브 ══════════════ */
+var c3=$('#c3'), s3z=$('#s3z'), s3s=$('#s3s');
+var VEC=[0.9,-0.4,0.7,1.0,-0.8,0.35,-0.15,0.6];
+var DEV=[0.9,-1.2,0.3,-0.7,1.4,0.1,-1.0,0.55];
+function draw3(){
+  var z=+s3z.value, sp=+s3s.value;
+  $('#v3z').textContent=z.toFixed(1);
+  $('#v3s').textContent=sp.toFixed(1);
+  var e=fit(c3), g=e.g, w=e.w, h=e.h;
+  var gapx=18, wL=Math.min(300, (w-gapx)*0.44), ox=wL+gapx, wR=w-ox;
+
+  /* 왼쪽 : 시그모이드 */
+  var pl=30, pb=24, pt=16;
+  var X=function(v){ return pl+(v+6)/12*(wL-pl-8); };
+  var Y=function(v){ return h-pb-v*(h-pb-pt); };
+  g.strokeStyle=C('--grid'); g.lineWidth=1;
+  [0,0.5,1].forEach(function(v){
+    g.beginPath(); g.moveTo(pl,Y(v)); g.lineTo(wL-8,Y(v)); g.stroke();
+    label(g,v.toFixed(1), pl-5, Y(v)+4, C('--muted'), 10, 'end');
+  });
+  g.strokeStyle=C('--axis'); line(g,X(0),pt,X(0),h-pb,C('--axis'),1);
+  g.strokeStyle=C('--s1'); g.lineWidth=2.2; g.beginPath();
+  for(var p=0;p<=120;p++){
+    var v=-6+12*p/120;
+    if(p===0) g.moveTo(X(v),Y(sigmoid(v))); else g.lineTo(X(v),Y(sigmoid(v)));
+  }
+  g.stroke();
+  dot(g,X(z),Y(sigmoid(z)),5.5,C('--s2'),C('--surface-1'));
+  label(g,'σ(z) = '+sigmoid(z).toFixed(3), pl+2, pt+11, C('--s2'), 12);
+  label(g,'게이트 함수 σ', pl+2, h-7, C('--muted'), 10.5);
+
+  /* 오른쪽 : 통과 막대 */
+  var n=VEC.length, bw=(wR-24)/n, base=h-30, amp=(h-58)/2, mid=base-amp;
+  label(g,'벡터 8개 성분이 밸브를 통과한 결과', ox+2, pt-2, C('--muted'), 10.5);
+  line(g,ox+4,mid,w-8,mid,C('--axis'),1);
+  for(var i=0;i<n;i++){
+    var gate=sigmoid(z+sp*DEV[i]);
+    var vin=VEC[i], vout=vin*gate;
+    var x=ox+8+i*bw;
+    /* 입력(윤곽) */
+    var hi=vin*amp*0.9;
+    g.strokeStyle=C('--axis'); g.lineWidth=1; g.setLineDash([3,3]);
+    g.strokeRect(x+1, mid-Math.max(hi,0), Math.max(2,bw-6), Math.abs(hi));
+    g.setLineDash([]);
+    /* 출력(채움) */
+    var ho=vout*amp*0.9;
+    g.fillStyle = C('--s1'); g.globalAlpha = 0.35+0.65*gate;
+    g.fillRect(x+1, ho>=0? mid-ho : mid, Math.max(2,bw-6), Math.abs(ho));
+    g.globalAlpha=1;
+    label(g, gate.toFixed(2), x+(bw-6)/2+1, base+12, C('--muted'), 9.5, 'center');
+  }
+  label(g,'점선 = 원래 값 · 채움 = 통과한 값 · 숫자 = 게이트', ox+2, h-6, C('--muted'), 10);
+
+  var avg=0; for(var q=0;q<n;q++) avg+=sigmoid(z+sp*DEV[q]); avg/=n;
+  var st=$('#st3');
+  if(avg<0.15) setStatus(st,'bad','거의 완전 차단 — 이 성분들은 다음 스텝으로 넘어가지 못합니다');
+  else if(avg>0.85) setStatus(st,'ok','거의 완전 통과 — 값이 그대로 보존됩니다');
+  else if(sp<0.05) setStatus(st,'warn','부분 통과 — 모든 성분이 같은 비율('+avg.toFixed(2)+')로 줄어듭니다. 편차를 올려 보세요');
+  else setStatus(st,'warn','부분 통과 — 성분마다 서로 다른 비율로 살아남습니다 (게이트는 성분별로 독립입니다)');
+}
+[s3z,s3s].forEach(function(el){ el.addEventListener('input', draw3); });
+
+/* ══════════════ 데모 4 : 셀 다이어그램 ══════════════ */
+var c4=$('#c4'), step4=0;
+function draw4(){
+  var e=fit(c4), g=e.g, w=e.w, h=e.h;
+  var A=function(on){ return (step4===0 || on) ? 1 : 0.15; };
+  var Cy=h*0.28, Gy=h*0.66, Hy=h*0.87;
+  var xf=w*0.30, xi=w*0.435, xg=w*0.545, xo=w*0.70;
+  var xMul=xf, xAdd=w*0.49, xTanh=w*0.79;
+  var boxW=Math.min(58, w*0.078), boxH=26;
+
+  /* 셀 경계 */
+  g.globalAlpha=1;
+  rrect(g, w*0.13, h*0.14, w*0.74, h*0.78, 12);
+  g.strokeStyle=C('--border'); g.lineWidth=1.4; g.setLineDash([5,5]); g.stroke(); g.setLineDash([]);
+  label(g,'LSTM 셀 (한 스텝)', w*0.13+8, h*0.14-6, C('--muted'), 11);
+
+  /* ── 셀 상태 레일 ── */
+  g.globalAlpha=A(step4===1||step4===3);
+  line(g, 0, Cy, xMul-11, Cy, C('--s1'), 3.4);
+  label(g,'C', 4, Cy-9, C('--s1'), 12.5);
+  label(g,'t−1', 15, Cy-6, C('--s1'), 9);
+  g.globalAlpha=A(step4===3);
+  line(g, xMul+11, Cy, xAdd-11, Cy, C('--s1'), 3.4);
+  g.globalAlpha=A(step4===3||step4===4);
+  line(g, xAdd+11, Cy, w, Cy, C('--s1'), 3.4);
+  label(g,'C', w-22, Cy-9, C('--s1'), 12.5, 'end');
+  label(g,'t', w-8, Cy-6, C('--s1'), 9, 'end');
+
+  /* ⊗ 망각 */
+  g.globalAlpha=A(step4===1||step4===3);
+  dot(g,xMul,Cy,11,C('--surface-1'),C('--s2'));
+  label(g,'×',xMul,Cy+5,C('--s2'),15,'center');
+  /* ⊕ 갱신 */
+  g.globalAlpha=A(step4===3);
+  dot(g,xAdd,Cy,11,C('--surface-1'),C('--s1'));
+  label(g,'+',xAdd,Cy+5,C('--s1'),15,'center');
+
+  /* ── 입력 레일 ── */
+  g.globalAlpha=A(step4>=1&&step4<=4);
+  arrow(g, 0, Hy, w*0.20, Hy, C('--text-secondary'), 2);
+  label(g,'h', 4, Hy-8, C('--text-secondary'), 12.5);
+  label(g,'t−1', 15, Hy-5, C('--text-secondary'), 9);
+  arrow(g, w*0.20, h-6, w*0.20, Hy+4, C('--text-secondary'), 2);
+  label(g,'x', w*0.20+7, h-8, C('--text-secondary'), 12.5);
+  label(g,'t', w*0.20+16, h-5, C('--text-secondary'), 9);
+  line(g, w*0.20, Hy, xo+boxW*0.1, Hy, C('--text-secondary'), 2);
+
+  /* ── 게이트 박스 ── */
+  function gbox(cx, txt, col, on, sub){
+    g.globalAlpha=A(on);
+    rrect(g, cx-boxW/2, Gy-boxH/2, boxW, boxH, 6);
+    g.fillStyle=C('--surface-1'); g.fill();
+    g.strokeStyle=col; g.lineWidth=1.8; g.stroke();
+    label(g,txt,cx,Gy+5,col,13,'center');
+    label(g,sub,cx-boxW/2-5,Gy+4,col,12,'end');
+    line(g, cx, Hy, cx, Gy+boxH/2, C('--text-secondary'), 1.6);
+  }
+  gbox(xf,'σ',C('--s2'), step4===1, 'f');
+  gbox(xi,'σ',C('--s3'), step4===2, 'i');
+  gbox(xg,'tanh',C('--s3'), step4===2, 'C̃');
+  gbox(xo,'σ',C('--s4'), step4===4, 'o');
+
+  /* f → ⊗ */
+  g.globalAlpha=A(step4===1);
+  arrow(g, xf, Gy-boxH/2, xf, Cy+13, C('--s2'), 1.8);
+  /* i·C̃ → ⊗ → ⊕ */
+  var yMerge=h*0.47;
+  g.globalAlpha=A(step4===2||step4===3);
+  line(g, xi, Gy-boxH/2, xi, yMerge, C('--s3'), 1.8);
+  line(g, xg, Gy-boxH/2, xg, yMerge, C('--s3'), 1.8);
+  line(g, xi, yMerge, xAdd-9, yMerge, C('--s3'), 1.8);
+  line(g, xg, yMerge, xAdd+9, yMerge, C('--s3'), 1.8);
+  dot(g,xAdd,yMerge,9,C('--surface-1'),C('--s3'));
+  label(g,'×',xAdd,yMerge+4,C('--s3'),13,'center');
+  g.globalAlpha=A(step4===3);
+  arrow(g, xAdd, yMerge-9, xAdd, Cy+13, C('--s3'), 1.8);
+
+  /* 출력 경로 */
+  var yT=h*0.44, yOut=h*0.60;
+  g.globalAlpha=A(step4===4);
+  line(g, xTanh, Cy, xTanh, yT-11, C('--s1'), 1.8);
+  rrect(g, xTanh-boxW/2, yT-11, boxW, 22, 6);
+  g.fillStyle=C('--surface-1'); g.fill();
+  g.strokeStyle=C('--s4'); g.lineWidth=1.6; g.stroke();
+  label(g,'tanh',xTanh,yT+5,C('--s4'),11,'center');
+  line(g, xTanh, yT+11, xTanh, yOut-9, C('--s4'), 1.8);
+  dot(g,xTanh,yOut,9,C('--surface-1'),C('--s4'));
+  label(g,'×',xTanh,yOut+4,C('--s4'),13,'center');
+  line(g, xo, Gy-boxH/2, xo, yOut, C('--s4'), 1.8);
+  line(g, xo, yOut, xTanh-9, yOut, C('--s4'), 1.8);
+  arrow(g, xTanh+9, yOut, w-6, yOut, C('--s4'), 2);
+  label(g,'h', w-20, yOut-9, C('--s4'), 12.5, 'end');
+  label(g,'t', w-6, yOut-6, C('--s4'), 9, 'end');
+  g.globalAlpha=1;
+
+  var st=$('#st4');
+  var msg=[
+    ['info','네 개의 층(σ·σ·tanh·σ)이 하나의 셀 안에서 상호작용합니다. 위쪽 굵은 선이 셀 상태 레일입니다.'],
+    ['warn','① 망각 — f = σ(W<sub>f</sub>[h<sub>t−1</sub>, x<sub>t</sub>]+b<sub>f</sub>) 를 계산해 C<sub>t−1</sub>에 곱합니다. 0인 성분은 여기서 사라집니다.'],
+    ['ok','② 입력 — i는 “쓸지 말지”, C̃는 “쓸 내용”. 둘을 곱해 더할 양을 만듭니다.'],
+    ['info','③ 갱신 — C<sub>t</sub> = f⊙C<sub>t−1</sub> + i⊙C̃. 레일 위에는 곱과 합만 있습니다. 행렬 곱이 없다는 점이 핵심입니다.'],
+    ['ok','④ 출력 — 셀 상태를 tanh로 눌러 −1~1로 만든 뒤, o가 허락한 부분만 h<sub>t</sub>로 내보냅니다.']
+  ][step4];
+  setStatus(st, msg[0], msg[1]);
+}
+Array.prototype.forEach.call(document.querySelectorAll('.stepbtn'), function(b){
+  b.addEventListener('click', function(){
+    step4=+b.dataset.step;
+    Array.prototype.forEach.call(document.querySelectorAll('.stepbtn'), function(o){
+      o.setAttribute('aria-pressed', (+o.dataset.step===step4) ? 'true' : 'false');
+    });
+    draw4();
+  });
+});
+
+/* ══════════════ 데모 5 : 게이트 조작기 ══════════════ */
+var c5=$('#c5'), s5=['s5c','s5f','s5i','s5g','s5o'].map(function(id){ return $('#'+id); });
+function draw5(){
+  var cp=+s5[0].value, f=+s5[1].value, i=+s5[2].value, gg=+s5[3].value, o=+s5[4].value;
+  $('#v5c').textContent=cp.toFixed(2); $('#v5f').textContent=f.toFixed(2);
+  $('#v5i').textContent=i.toFixed(2); $('#v5g').textContent=gg.toFixed(2);
+  $('#v5o').textContent=o.toFixed(2);
+  var ct=f*cp+i*gg, ht=o*Math.tanh(ct);
+  $('#r5c').textContent=ct.toFixed(3);
+  $('#r5h').textContent=ht.toFixed(3);
+
+  var e=fit(c5), g=e.g, w=e.w, h=e.h;
+  var gap=18, wL=Math.round((w-gap)*0.50), ox=wL+gap, wR=w-ox;
+
+  /* 왼쪽 : 기여도 막대 */
+  var pl=74, pt=22, rows=[
+    {n:'f · C<sub>t−1</sub>', t:'f · C(t−1)', v:f*cp, c:'--s2'},
+    {n:'i · C̃', t:'i · C̃', v:i*gg, c:'--s3'},
+    {n:'C<sub>t</sub>', t:'C(t)', v:ct, c:'--s1'},
+    {n:'h<sub>t</sub>', t:'h(t)', v:ht, c:'--s4'}
+  ];
+  var maxv=Math.max(2, Math.abs(ct)*1.1);
+  var zx=pl+(wL-pl-14)/2, half=(wL-pl-14)/2;
+  label(g,'한 스텝의 계산', 4, 13, C('--muted'), 10.5);
+  line(g,zx,pt-6,zx,h-16,C('--axis'),1);
+  rows.forEach(function(r,k){
+    var y=pt+k*((h-pt-18)/4)+10;
+    label(g,r.t, pl-8, y+4, C('--text-secondary'), 11.5, 'end');
+    var len=Math.max(-half,Math.min(half, r.v/maxv*half));
+    g.fillStyle=C(r.c);
+    g.fillRect(len>=0?zx:zx+len, y-8, Math.abs(len), 16);
+    label(g, r.v.toFixed(2), len>=0? zx+len+6 : zx+len-6, y+4,
+      C('--text-primary'), 11.5, len>=0?'left':'end');
+  });
+
+  /* 오른쪽 : 20스텝 반복 */
+  var pl2=32, pt2=18, pb2=24, N=20;
+  var traj=[cp], cc=cp;
+  for(var k2=0;k2<N;k2++){ cc=f*cc+i*gg; traj.push(cc); }
+  var mx=1; traj.forEach(function(v){ mx=Math.max(mx,Math.abs(v)); });
+  mx*=1.15;
+  var X=function(k){ return ox+pl2+k/N*(wR-pl2-10); };
+  var Y=function(v){ return pt2+(mx-v)/(2*mx)*(h-pt2-pb2); };
+  g.strokeStyle=C('--grid'); g.lineWidth=1;
+  [mx,0,-mx].forEach(function(v){
+    g.beginPath(); g.moveTo(ox+pl2,Y(v)); g.lineTo(w-10,Y(v)); g.stroke();
+  });
+  line(g,ox+pl2,Y(0),w-10,Y(0),C('--axis'),1.3);
+  label(g, mx.toFixed(1), ox+pl2-5, Y(mx)+9, C('--muted'), 10, 'end');
+  label(g,'0', ox+pl2-5, Y(0)+4, C('--muted'), 10, 'end');
+  label(g,'같은 설정을 20스텝 반복하면', ox+pl2, 12, C('--muted'), 10.5);
+  g.strokeStyle=C('--s1'); g.lineWidth=2.2; g.beginPath();
+  traj.forEach(function(v,k){ if(k===0) g.moveTo(X(k),Y(v)); else g.lineTo(X(k),Y(v)); });
+  g.stroke();
+  traj.forEach(function(v,k){ if(k%2===0) dot(g,X(k),Y(v),2.6,C('--s1'),null); });
+  label(g,'k=0', X(0), h-8, C('--muted'), 10, 'center');
+  label(g,'k=20', X(N), h-8, C('--muted'), 10, 'end');
+  $('#r5k').textContent = traj[N].toFixed(3);
+
+  var st=$('#st5');
+  if(f>0.98 && i<0.02) setStatus(st,'ok','기억 유지 — 20스텝이 지나도 값이 그대로입니다. 이것이 장기 기억의 정체입니다.');
+  else if(f<0.02 && i>0.98) setStatus(st,'info','덮어쓰기 — 이전 기억을 버리고 새 값으로 교체합니다.');
+  else if(f<0.02 && i<0.02) setStatus(st,'warn','지우기 — 셀이 0으로 비워집니다.');
+  else if(f>0.98 && i>0.98) setStatus(st,'info','누적 — 매 스텝 후보가 더해집니다. 카운터를 만들 때 쓰는 설정입니다.');
+  else if(f<1 && f>0.5 && i<0.02) setStatus(st,'warn','새는 기억 — f가 1보다 조금만 작아도 지수적으로 흐려집니다 ('+Math.pow(f,20).toFixed(3)+'배 / 20스텝)');
+  else setStatus(st,'info','f는 남길 비율, i는 쓸 비율입니다. 두 값의 조합이 셀의 동작을 결정합니다.');
+}
+s5.forEach(function(el){ el.addEventListener('input', draw5); });
+Array.prototype.forEach.call(document.querySelectorAll('button[data-p]'), function(b){
+  b.addEventListener('click', function(){
+    var p=b.dataset.p;
+    var set={keep:[1,0],write:[0,1],erase:[0,0],accum:[1,1],leak:[0.9,0]}[p];
+    s5[1].value=set[0]; s5[2].value=set[1];
+    if(p==='accum'){ s5[0].value=0; s5[3].value=0.3; }
+    draw5();
+  });
+});
+
+/* ══════════════ 데모 6 : 괄호 세는 LSTM ══════════════ */
+var c6=$('#c6'), i6=$('#i6'), anim6={on:false, i:0, t:0};
+function gates(ch){
+  if(ch==='(') return {f:1, i:1, g:1};
+  if(ch===')') return {f:1, i:1, g:-1};
+  if(ch==='.') return {f:0, i:0, g:0};
+  return {f:1, i:0, g:0};
+}
+function run6(s){
+  var c=0, v=0, out=[];
+  for(var k=0;k<s.length;k++){
+    var gt=gates(s[k]);
+    c = gt.f*c + gt.i*gt.g;
+    v = Math.tanh(gt.f*v + gt.i*gt.g);   /* tanh로 압축하는 바닐라식 상태 */
+    out.push({ch:s[k], f:gt.f, i:gt.i, g:gt.g, c:c, v:v});
+  }
+  return out;
+}
+function draw6(){
+  var s=i6.value.slice(0,64);
+  var R=run6(s);
+  var e=fit(c6), g=e.g, w=e.w, h=e.h;
+  var pl=34, pr=10, pt=16;
+  var yTop=pt, yBot=h*0.60;                 /* 셀 상태 영역 */
+  var n=Math.max(1,R.length), bw=(w-pl-pr)/n;
+  var mx=1; R.forEach(function(r){ mx=Math.max(mx, r.c); });
+  var Y=function(v){ return yBot-(v/(mx+0.6))*(yBot-yTop-6); };
+
+  /* 눈금 */
+  g.strokeStyle=C('--grid'); g.lineWidth=1;
+  for(var d=0; d<=Math.ceil(mx); d++){
+    g.beginPath(); g.moveTo(pl,Y(d)); g.lineTo(w-pr,Y(d)); g.stroke();
+    label(g,String(d), pl-6, Y(d)+4, C('--muted'), 10, 'end');
+  }
+  label(g,'셀 상태 C = 괄호 깊이', pl+2, pt+2, C('--s1'), 11);
+
+  var shown = anim6.on ? Math.min(anim6.i, R.length) : R.length;
+
+  /* tanh 압축 상태 (비교) */
+  g.strokeStyle=C('--muted'); g.lineWidth=1.6; g.setLineDash([4,3]); g.beginPath();
+  for(var k=0;k<shown;k++){
+    var x=pl+(k+0.5)*bw, y=Math.min(yBot, Y(R[k].v));
+    if(k===0) g.moveTo(x,y); else g.lineTo(x,y);
+  }
+  g.stroke(); g.setLineDash([]);
+
+  /* 셀 상태 계단 */
+  g.strokeStyle=C('--s1'); g.lineWidth=2.4; g.beginPath();
+  for(var k2=0;k2<shown;k2++){
+    var x2=pl+k2*bw, y2=Y(R[k2].c);
+    if(k2===0) g.moveTo(x2,y2); else g.lineTo(x2,y2);
+    g.lineTo(x2+bw,y2);
+  }
+  g.stroke();
+
+  /* 게이트 스트립 + 문자 */
+  var yF=h*0.68, yI=h*0.76, bh=7;
+  label(g,'f', pl-6, yF+7, C('--s2'), 10.5, 'end');
+  label(g,'i', pl-6, yI+7, C('--s3'), 10.5, 'end');
+  for(var k3=0;k3<R.length;k3++){
+    var on = k3<shown;
+    var x3=pl+k3*bw;
+    g.globalAlpha = on?1:0.18;
+    g.fillStyle = R[k3].f>0.5 ? C('--s2') : C('--surface-1');
+    g.strokeStyle=C('--border'); g.lineWidth=1;
+    g.fillRect(x3+0.5, yF, Math.max(1,bw-1), bh);
+    if(R[k3].f<=0.5) g.strokeRect(x3+0.5, yF, Math.max(1,bw-1), bh);
+    g.fillStyle = R[k3].i>0.5 ? (R[k3].g>0?C('--s3'):C('--warn')) : C('--surface-1');
+    g.fillRect(x3+0.5, yI, Math.max(1,bw-1), bh);
+    if(R[k3].i<=0.5) g.strokeRect(x3+0.5, yI, Math.max(1,bw-1), bh);
+    /* 문자 */
+    var ch=R[k3].ch===' ' ? '·' : R[k3].ch;
+    mono(g, ch, x3+bw/2, h-8,
+      (ch==='('||ch===')') ? C('--s1') : (ch==='.' ? C('--s8') : C('--muted')),
+      Math.min(13, Math.max(8, bw*0.9)), 'center');
+    g.globalAlpha=1;
+  }
+
+  var last = R.length? R[shown>0?shown-1:0] : {c:0,v:0};
+  var maxd=0, maxv=0;
+  R.slice(0,shown).forEach(function(r){ maxd=Math.max(maxd,r.c); maxv=Math.max(maxv,r.v); });
+  $('#r6d').textContent = (R.length? last.c : 0).toFixed(0);
+  $('#r6m').textContent = maxd.toFixed(0);
+  $('#r6t').textContent = maxv.toFixed(3);
+
+  var st=$('#st6');
+  var open = R.length? R[R.length-1].c : 0;
+  if(anim6.on && shown>0){
+    var r=R[shown-1];
+    var act = r.ch==='(' ? '괄호 열림 → i=1, C̃=+1 (깊이 +1)'
+      : r.ch===')' ? '괄호 닫힘 → i=1, C̃=−1 (깊이 −1)'
+      : r.ch==='.' ? '문장 끝 → f=0 (셀 초기화)'
+      : '관련 없는 문자 → f=1, i=0 (기억 그대로 통과)';
+    setStatus(st,'info', (shown)+'번째 문자 “'+(r.ch===' '?'␣':r.ch)+'” — '+act);
+  } else if(open>0) setStatus(st,'warn','닫히지 않은 괄호가 '+open+'개 남았습니다 — 셀 상태가 그대로 알려 줍니다');
+  else if(open<0) setStatus(st,'bad','여는 괄호보다 닫는 괄호가 많습니다 (깊이 '+open+')');
+  else setStatus(st,'ok','괄호가 모두 짝을 맞췄습니다 — 셀 상태가 정확히 0으로 돌아왔습니다');
+}
+i6.addEventListener('input', function(){ anim6.on=false; draw6(); });
+Array.prototype.forEach.call(document.querySelectorAll('button[data-t]'), function(b){
+  b.addEventListener('click', function(){ i6.value=b.dataset.t; anim6.on=false; draw6(); });
+});
+$('#b6step').addEventListener('click', function(){
+  anim6.on=true; anim6.i=0; anim6.t=performance.now(); requestAnimationFrame(step6);
+});
+function step6(now){
+  if(!anim6.on) return;
+  if(now-anim6.t>170){ anim6.i++; anim6.t=now; }
+  draw6();
+  if(anim6.i> i6.value.slice(0,64).length){ anim6.on=false; draw6(); return; }
+  requestAnimationFrame(step6);
+}
+
+/* ══════════════ 데모 7 : 파라미터 비교 ══════════════ */
+var c7=$('#c7'), s7m=$('#s7m'), s7n=$('#s7n');
+function draw7(){
+  var m=+s7m.value, n=+s7n.value;
+  $('#v7m').textContent=m; $('#v7n').textContent=n;
+  var unit=n*m+n*n+n;
+  var vals=[
+    {name:'LSTM', sub:'4 × (n·m + n² + n)', v:4*unit, c:'--s1'},
+    {name:'GRU', sub:'3 × (n·m + n² + n)', v:3*unit, c:'--s3'},
+    {name:'바닐라 RNN', sub:'1 × (n·m + n² + n)', v:unit, c:'--muted'}
+  ];
+  var e=fit(c7), g=e.g, w=e.w, h=e.h;
+  var pl=Math.min(112, w*0.3), pr=14, pt=22, rowH=(h-pt-16)/3;
+  var mx=vals[0].v;
+  vals.forEach(function(r,k){
+    var y=pt+k*rowH;
+    label(g, r.name, pl-10, y+rowH*0.42, C('--text-primary'), 13, 'end');
+    label(g, r.sub, pl-10, y+rowH*0.42+15, C('--muted'), 10.5, 'end');
+    var len=(r.v/mx)*(w-pl-pr-70);
+    g.fillStyle=C(r.c);
+    rrect(g, pl, y+rowH*0.42-13, Math.max(2,len), 24, 4); g.fill();
+    label(g, fmt(r.v), pl+len+8, y+rowH*0.42+5, C('--text-primary'), 12.5);
+  });
+  label(g,'같은 m·n에서의 파라미터 수', 4, 13, C('--muted'), 10.5);
+  $('#r7l').textContent=fmt(4*unit);
+  $('#r7g').textContent=fmt(3*unit);
+  $('#r7r').textContent=fmt(unit);
+  $('#r7ratio').textContent='75.0 %';
+}
+[s7m,s7n].forEach(function(el){ el.addEventListener('input', draw7); });
+
+/* ══════════════ 퀴즈 ══════════════ */
+(function(){
+  var QS=[
+    {q:'RNN이 장기 의존성을 배우기 어려운 근본 이유는?',
+     o:['은닉 상태의 차원이 작아서 정보를 담을 공간이 부족하다',
+        '역전파에서 같은 야코비안이 반복 곱해져 신호가 지수적으로 소멸/폭발한다',
+        '입력 시퀀스가 길면 메모리가 부족해진다',
+        'tanh 대신 ReLU를 쓰지 않아서'], a:1,
+     e:'표현력의 문제가 아니라 최적화의 문제입니다. 이론상 적절한 W가 존재해도 그 W로 가는 학습 신호가 λ^k로 사라집니다. (§2)'},
+    {q:'셀 상태 C가 기울기 소멸을 피할 수 있는 이유는?',
+     o:['C에는 더 큰 학습률을 쓰기 때문',
+        'C가 정수만 담기 때문',
+        'C의 갱신에 행렬 곱과 비선형 압축이 없고 원소별 곱·덧셈만 있어 ∂C_t/∂C_{t−1} = f가 되기 때문',
+        'C를 매 스텝 정규화하기 때문'], a:2,
+     e:'f≈1이면 배율이 1에 가까워 신호가 감쇠 없이 수백 스텝을 거슬러 올라갑니다. ResNet의 스킵 연결과 같은 논리입니다. (§3)'},
+    {q:'게이트가 시그모이드를 쓰는 이유로 가장 적절한 것은?',
+     o:['출력이 0~1이라 “얼마나 통과시킬지”라는 비율로 해석되고, 원소별 곱으로 밸브 역할을 하기 때문',
+        '계산이 tanh보다 빠르기 때문',
+        '미분값이 항상 1이기 때문',
+        '음수를 만들 수 있기 때문'], a:0,
+     e:'0=완전 차단, 1=완전 통과. 후보 C̃가 tanh(−1~1)인 것과 대비됩니다 — 후보는 더하거나 뺄 수 있어야 하니까요. (§3)'},
+    {q:'C_t = f⊙C_{t−1} + i⊙C̃_t 에서 f=1, i=0으로 20스텝을 진행하면?',
+     o:['C가 0으로 수렴한다', 'C가 매 스텝 tanh로 압축되어 ±1로 포화된다',
+        'C가 20스텝 내내 값을 그대로 유지한다', 'C가 지수적으로 발산한다'], a:2,
+     e:'남기는 비율 1, 쓰는 비율 0이므로 완전한 보존입니다. 데모 5의 “기억 유지” 프리셋이 이 설정입니다. (§4)'},
+    {q:'LSTM이 셀 상태 C와 은닉 상태 h를 나누어 두는 이유는?',
+     o:['C는 학습되고 h는 학습되지 않기 때문',
+        'C는 장기 보관용 장부이고, h는 이번 스텝에 실제로 내보낼 답변이자 다음 게이트의 입력이기 때문',
+        'C는 정수, h는 실수이기 때문',
+        '메모리 사용량을 줄이기 위해'], a:1,
+     e:'출력 게이트 덕분에 “셀에는 갖고 있지만 지금은 내보내지 않는” 정보가 가능해집니다. 상태가 하나면 모든 기억이 매 스텝 노출됩니다. (§4)'},
+    {q:'GRU가 LSTM과 다른 점으로 옳은 것은?',
+     o:['게이트를 하나도 쓰지 않는다',
+        '셀 상태와 은닉 상태를 합치고, 망각·입력을 업데이트 게이트 하나로 묶는다',
+        'LSTM보다 파라미터가 더 많다',
+        '덧셈 갱신 대신 행렬 곱 갱신을 쓴다'], a:1,
+     e:'게이트 2개(z, r)에 상태 1개라 파라미터가 LSTM의 3/4입니다. 마지막 갱신이 여전히 가중 평균 형태의 덧셈이라 소멸 방지 성질은 유지됩니다. (§6)'},
+    {q:'여러 LSTM 변형을 대규모로 비교한 연구들의 결론에 가장 가까운 것은?',
+     o:['GRU가 모든 과제에서 LSTM을 능가한다',
+        '핍홀 연결이 항상 필수적이다',
+        '변형 간 성능은 대체로 비슷하며, 망각 게이트와 출력 활성화는 빼면 안 되는 필수 부품이다',
+        '자동 탐색으로 모든 과제에서 이기는 구조가 발견되었다'], a:2,
+     e:'Greff 등(2015)은 여덟 변형이 사실상 동등하다고 보고했고, Jozefowicz 등(2015)은 1만여 구조를 탐색했지만 보편적 승자는 없었습니다. 대신 “망각 편향을 1로 초기화하라”는 실용적 결론을 남겼습니다. (§6)'}
+  ];
+  var box=$('#quiz'), done=0, correct=0;
+  QS.forEach(function(qz, qi){
+    var q=document.createElement('div'); q.className='q';
+    var hh=document.createElement('h4'); hh.textContent='Q'+(qi+1)+'. '+qz.q; q.appendChild(hh);
+    var expl=document.createElement('div'); expl.className='expl';
+    var locked=false;
+    qz.o.forEach(function(opt, oi){
+      var lab=document.createElement('label'); lab.className='opt';
+      var r=document.createElement('input'); r.type='radio'; r.name='q'+qi;
+      var sp=document.createElement('span'); sp.textContent=opt;
+      lab.appendChild(r); lab.appendChild(sp);
+      r.addEventListener('change', function(){
+        if(locked) return; locked=true; done++;
+        var ok = oi===qz.a;
+        if(ok) correct++;
+        lab.classList.add(ok?'correct':'wrong');
+        if(!ok) q.querySelectorAll('.opt')[qz.a].classList.add('correct');
+        expl.classList.add('show'); if(!ok) expl.classList.add('bad');
+        expl.innerHTML=(ok?'<b>정답!</b> ':'<b>아쉽습니다.</b> ')+qz.e;
+        Array.prototype.forEach.call(q.querySelectorAll('input'), function(x){ x.disabled=true; });
+        $('#quizScore').textContent='진행 '+done+'/'+QS.length+' · 정답 '+correct+'개'+
+          (done===QS.length ? (correct>=6 ? ' — 훌륭합니다. 셀 상태의 정체를 정확히 이해하셨습니다 🎓'
+            : correct>=3 ? ' — 좋습니다. 틀린 문항의 절을 다시 만져 보세요.'
+            : ' — §3과 §4의 데모를 다시 돌려 보시길 권합니다.') : '');
+      });
+      q.appendChild(lab);
+    });
+    q.appendChild(expl);
+    box.appendChild(q);
+  });
+})();
+
+/* ────────── boot ────────── */
+function drawAll(){ draw1(); draw2(); draw3(); draw4(); draw5(); draw6(); draw7(); }
+window.addEventListener('resize', drawAll);
+document.querySelector('.stepbtn').setAttribute('aria-pressed','true');
+drawAll();
+})();
+</script>
+</body>
+</html>
