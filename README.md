@@ -12,9 +12,10 @@
 4. **한 스텝을 네 단계로** · 망각 f → 입력 i·후보 C̃ → 갱신 C = f⊙C + i⊙C̃ → 출력 h = o⊙tanh(C), C와 h를 나눈 이유, 파라미터 수
 5. **손으로 가중치를 심어 보기** · 사람이 직접 정한 게이트만으로 괄호 깊이를 세는 LSTM, tanh 압축 상태와의 비교
 6. **변형들** · 핍홀 연결, 망각·입력 결합, GRU, Depth Gated RNN, Clockwork RNN, 대규모 비교 실험(Greff 2015 / Jozefowicz 2015)의 결론
-7. **그 뒤에 무슨 일이 있었나** · 어텐션, Grid LSTM, 생성 모델, 그리고 Transformer 이후에도 살아남은 아이디어
+7. **실제 문장은 어디에 담기는가** · 가중치(붙박이)와 상태(메모장)의 구분, 브라우저에서 직접 학습한 12차원 char-LSTM의 셀 상태를 영어 문장에 대해 열어 보기
+8. **그 뒤에 무슨 일이 있었나** · 어텐션, Grid LSTM, 생성 모델, 그리고 Transformer 이후에도 살아남은 아이디어
 
-## 인터랙티브 데모 7종
+## 인터랙티브 데모 8종
 
 | 데모 | 무엇을 확인하나 |
 | --- | --- |
@@ -25,6 +26,7 @@
 | 게이트 조작기 | f·i·C̃·o 조합이 만드는 유지/덮어쓰기/지우기/누적 동작, 20스텝 궤적 |
 | 한 글자씩 실행하기 | 손으로 심은 가중치로 괄호 깊이를 세는 LSTM, 문자열 직접 입력 |
 | 구조와 파라미터 비교 | LSTM : GRU : RNN = 4 : 3 : 1 |
+| 영어 문장이 격자에 새겨지는 것을 보기 | 브라우저에서 즉석 학습한 char-LSTM · 셀 12개 × 글자 T개 격자 · 한 칸의 갱신 방정식 · 글자 하나의 기억 수명 |
 
 여기에 이해도 확인 퀴즈 7문항이 포함되어 있습니다.
 
@@ -34,7 +36,7 @@
 
 ## 출처와 참고
 
-이 자료는 Christopher Olah의 [Understanding LSTM Networks](https://colah.github.io/posts/2015-08-Understanding-LSTMs/)(2015)가 다루는 개념과 설명 순서를 참고해, 본문·그림·데모를 한국어 학습용으로 새로 작성한 것입니다. 원문도 함께 읽어 보시길 권합니다.
+이 자료는 Christopher Olah의 [Understanding LSTM Networks](https://colah.github.io/posts/2015-08-Understanding-LSTMs/)(2015)를 바탕으로 한 한국어 번역·보충 설명 자료입니다. 원문이 다루는 개념과 설명 순서를 그대로 따라가되, 본문·그림·데모를 한국어 학습용으로 새로 작성했습니다. 이 사실은 페이지 상단에도 명시되어 있습니다. 원문도 함께 읽어 보시길 권합니다.
 
 주요 참고 문헌은 페이지 하단에 정리되어 있습니다 — Hochreiter(1991), Bengio 등(1994), Hochreiter & Schmidhuber(1997), Gers & Schmidhuber(2000), Cho 등(2014), Koutník 등(2014), Karpathy 등(2015), Yao 등(2015), Greff 등(2015), Jozefowicz 등(2015), Xu 등(2015), Kalchbrenner 등(2015) 외.
 
