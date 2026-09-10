@@ -24,6 +24,8 @@
   --warn:#fab219;
   --good:#0ca30c;
   --wash:rgba(42,120,214,0.08);
+  --hot:#d2492e;
+  --cold:#2a6fd6;
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
@@ -43,6 +45,8 @@
   --warn:#fab219;
   --good:#0ca30c;
   --wash:rgba(57,135,229,0.14);
+  --hot:#e0674a;
+  --cold:#4b8ae8;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
@@ -171,6 +175,63 @@ footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--border);color
 footer a{color:var(--text-secondary)}
 .refs{font-size:13px;color:var(--text-secondary);line-height:1.7}
 .refs li{margin:3px 0}
+/* ---- 데모 8 : 저장소 지도 ---- */
+.shelves{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 0}
+@media (max-width:640px){ .shelves{grid-template-columns:1fr} }
+.shelf{border:1px solid var(--border);border-radius:13px;padding:15px 16px;background:var(--surface-1)}
+.shelf.live{border-color:var(--s1);box-shadow:0 0 0 3px var(--wash)}
+.shelf .tag{display:block;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:650;margin-bottom:5px}
+.shelf h4{margin:0;font-size:14px;font-weight:650;color:var(--text-primary)}
+.shelf .big{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:30px;font-weight:700;
+  letter-spacing:-0.03em;line-height:1.15;margin:9px 0 1px;font-variant-numeric:tabular-nums}
+.shelf.live .big{color:var(--s1)}
+.shelf .unit{font-size:12.5px;color:var(--muted);line-height:1.5}
+.shelf ul{margin:10px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--text-secondary)}
+.shelf li{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--border);
+  padding-top:3px;margin-top:3px}
+.shelf li:first-child{border-top:0;margin-top:0}
+.shelf li span:last-child{font-variant-numeric:tabular-nums;color:var(--text-primary);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.shelf .foot{margin:11px 0 0;font-size:12.5px;color:var(--muted);line-height:1.6}
+.squeeze{margin:14px 0 0;border:1px solid var(--border);border-left:3px solid var(--s1);
+  border-radius:0 10px 10px 0;padding:12px 16px;background:var(--surface-1);font-size:14px;line-height:1.7}
+.squeeze b{font-variant-numeric:tabular-nums;color:var(--s1);font-weight:700;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* ---- 데모 8 : 격자와 방정식 ---- */
+.demo .subh{font-size:12px;font-weight:650;color:var(--text-secondary);letter-spacing:0.02em;
+  margin:20px 0 9px;padding-top:15px;border-top:1px solid var(--border)}
+#c8{width:auto;max-width:none;min-width:0;border-radius:0}
+.gridbox{border:1px solid var(--border);border-radius:10px;background:var(--page);margin-top:2px}
+.legend i.sq{width:13px;height:13px;border-radius:3px;border:1px solid var(--border)}
+.stepbar{display:flex;flex-wrap:wrap;gap:9px 16px;align-items:center;font-size:13px;
+  color:var(--text-secondary);margin:14px 0 0}
+.stepbar b{color:var(--text-primary);font-weight:650}
+.stepbar .mn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.chip8{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;
+  font-size:16px;background:var(--wash);color:var(--s1);border:1px solid var(--s1);
+  border-radius:6px;padding:0 9px;min-width:28px;text-align:center}
+.eqbox{background:var(--page);border:1px solid var(--border);border-radius:11px;padding:14px 16px;margin:12px 0 0}
+.eqbox .hd{font-size:12px;color:var(--muted);margin:0 0 8px}
+.eqline{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.95;
+  font-variant-numeric:tabular-nums;overflow-x:auto;white-space:nowrap;padding-bottom:2px}
+.eqline .k{color:var(--muted)}
+.cf{color:var(--s2);font-weight:700}
+.ci{color:var(--s3);font-weight:700}
+.co{color:var(--s4);font-weight:700}
+.cc{color:var(--s1);font-weight:700}
+.splitbar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin:11px 0 5px;background:var(--grid)}
+.splitbar i{display:block;height:100%}
+.splitlab{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.preds{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;align-items:center}
+.preds .lb{font-size:12px;color:var(--muted)}
+.pred{display:inline-flex;align-items:baseline;gap:5px;background:var(--page);border:1px solid var(--border);
+  border-radius:7px;padding:2px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.pred b{font-size:14px;color:var(--s1)}
+.pred.hit{border-color:var(--s3)}
+.pred.hit b{color:var(--s3)}
 </style>
 </head>
 <body>
@@ -181,7 +242,7 @@ footer a{color:var(--text-secondary)}
   <p class="kicker">순환 신경망 · 시퀀스 모델</p>
   <h1>LSTM은 어떻게 기억하는가</h1>
   <p class="sub">순환 신경망이 긴 문맥을 잃어버리는 이유부터, 셀 상태와 세 개의 게이트가 그 문제를 어떻게 우회하는지까지. 게이트를 손으로 돌려 보고, 사람이 직접 가중치를 심은 LSTM이 괄호를 세는 과정을 한 글자씩 따라가며 확인합니다.</p>
-  <p class="origin">이 자료는 Christopher Olah의 <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks</a>(2015)를 바탕으로 한 <strong>한국어 번역·보충 설명 자료</strong>입니다. 원문이 다루는 개념과 설명 순서를 그대로 따라가되, 본문·그림·데모를 한국어 학습용으로 새로 작성하고 직접 조작할 수 있는 인터랙티브 데모 7종을 더했습니다. 원문도 함께 읽어 보시길 권합니다.</p>
+  <p class="origin">이 자료는 Christopher Olah의 <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener">Understanding LSTM Networks</a>(2015)를 바탕으로 한 <strong>한국어 번역·보충 설명 자료</strong>입니다. 원문이 다루는 개념과 설명 순서를 그대로 따라가되, 본문·그림·데모를 한국어 학습용으로 새로 작성하고 직접 조작할 수 있는 인터랙티브 데모 8종을 더했습니다. 원문도 함께 읽어 보시길 권합니다.</p>
 </header>
 
 <nav class="toc">
@@ -193,6 +254,7 @@ footer a{color:var(--text-secondary)}
     <li><a href="#steps">한 스텝을 네 단계로 — 망각·입력·갱신·출력</a><span class="lvtag">학부</span></li>
     <li><a href="#hand">손으로 가중치를 심어 보기 — 괄호 세는 LSTM</a><span class="lvtag">학부</span></li>
     <li><a href="#var">변형들 — 핍홀·결합 게이트·GRU</a><span class="lvtag">심화</span></li>
+    <li><a href="#store">실제 문장은 어디에 담기는가</a><span class="lvtag">심화</span></li>
     <li><a href="#after">그 뒤에 무슨 일이 있었나 — 어텐션과 그 너머</a><span class="lvtag">심화</span></li>
     <li><a href="#wrap">정리와 퀴즈</a><span class="lvtag">종합</span></li>
   </ol>
@@ -559,7 +621,128 @@ footer a{color:var(--text-secondary)}
 
 <div class="key"><span class="lbl">정리</span><p>변형은 많지만 <strong>“게이트로 조절되는 덧셈형 상태”</strong>라는 뼈대는 모두 같습니다. 실무에서는 LSTM과 GRU 중 아무거나 골라도 대개 무방하고, 파라미터·속도가 아쉬우면 GRU, 안전한 기본값이 필요하면 LSTM(망각 편향 1)이 무난합니다.</p></div>
 
-<!-- ═══════════════ 7. 그 이후 ═══════════════ -->
+<!-- ═══════════════ 7. 실제 문장의 보관 ═══════════════ -->
+<h2 id="store"><span class="lv lv3"><span class="dot"></span>LEVEL 3 · 심화</span><br>실제 문장은 어디에 담기는가</h2>
+
+<p>데모 6의 게이트 값은 <strong>우리가 손으로 심은 것</strong>이었습니다. 그래서 셀 상태가 “괄호 깊이”라는 사실을 처음부터 알고 있었습니다. 그렇다면 아무것도 심어 주지 않고 <strong>영어 문장으로 학습시킨 LSTM</strong>은 무엇을 어디에 적어 둘까요? 이 절의 데모는 사전 학습된 가중치를 내려받지 않고, 짧은 영어 말뭉치로 12차원 LSTM을 <strong>이 브라우저에서 직접 학습</strong>시킨 뒤 그 내부를 열어 봅니다.</p>
+
+<h3>저장소는 두 군데로 나뉜다</h3>
+
+<p>“문장이 어떻게 보관되는가”가 헷갈리는 가장 큰 이유는, LSTM 안에 성격이 전혀 다른 저장소가 <strong>두 개</strong> 있기 때문입니다. 하나는 모든 문장이 함께 쓰는 <strong>붙박이</strong>이고, 하나는 지금 읽는 문장에만 딸린 <strong>메모장</strong>입니다.</p>
+
+<div class="shelves">
+  <div class="shelf">
+    <span class="tag">붙박이 · 학습이 끝나면 고정</span>
+    <h4>가중치 W<sub>f</sub> W<sub>i</sub> W<sub>C</sub> W<sub>o</sub></h4>
+    <div class="big" id="sh8w">—</div>
+    <div class="unit">개의 실수 · 어떤 문장이 들어와도 <em>변하지 않음</em></div>
+    <ul>
+      <li><span>게이트 3개 + 후보 1개</span><span id="sh8g">—</span></li>
+      <li><span>다음 문자 출력층</span><span id="sh8o">—</span></li>
+    </ul>
+    <p class="foot">여기 담긴 것은 문장이 아니라 <em>문장을 읽는 법</em>입니다. 영어의 철자 규칙, 단어가 공백으로 끝난다는 사실 같은 것.</p>
+  </div>
+  <div class="shelf live">
+    <span class="tag">메모장 · 글자마다 새로 쓰임</span>
+    <h4>셀 상태 C<sub>t</sub> + 은닉 상태 h<sub>t</sub></h4>
+    <div class="big" id="sh8s">—</div>
+    <div class="unit">개의 실수 · <em>지금까지 읽은 문장 전체</em>가 여기 들어 있음</div>
+    <ul>
+      <li><span>셀 상태 C — 장부</span><span id="sh8c">—</span></li>
+      <li><span>은닉 상태 h — 답변</span><span id="sh8h">—</span></li>
+    </ul>
+    <p class="foot">문장이 20자든 2,000자든 <em>이 크기는 그대로</em>입니다. 늘어나지 않습니다. 순환 신경망의 힘이자 한계가 여기입니다.</p>
+  </div>
+</div>
+
+<div class="squeeze" id="sq8">문장을 넣으면 압축률이 여기에 표시됩니다.</div>
+
+<div class="note"><strong>“몇 글자까지 기억하나요?”</strong> — 순전파에는 상한이 없습니다. <span class="math">C</span>와 <span class="math">h</span>는 첫 글자부터 끊김 없이 이어지므로, 100번째 글자를 읽는 순간의 장부에는 앞선 99글자가 전부 접혀 들어가 있습니다. 진짜 한계는 “몇 글자”라는 창이 아니라 <strong>12개라는 용량과 점진적 감쇠</strong>이고, 그것을 재는 것이 데모 8의 마지막 그래프입니다. 다만 <em>학습</em> 쪽에는 상한이 하나 있습니다 — 이 데모는 <strong>절단 BPTT(25글자)</strong>로 학습하므로 기울기가 25글자까지만 거슬러 흐르고, 따라서 모델이 <em>배울 수 있었던</em> 의존 거리도 그 언저리입니다. 추론할 때 상태가 흐르는 거리와는 별개의 이야기입니다.</div>
+
+<p>여기서 질문의 답이 나옵니다. 문장은 <strong>어디에도 글자 그대로 저장되지 않습니다</strong>. 글자는 어휘 크기만큼의 원-핫 벡터로 한 번 들어왔다가, 게이트를 통과하며 셀 상태의 12개 자리에 <strong>덧셈으로 누적</strong>되고 그대로 사라집니다. 남는 것은 “지금까지 읽은 것”을 12개 숫자로 요약한 장부 하나뿐입니다.</p>
+
+<div class="demo">
+  <h4>데모 8 — 영어 문장이 격자에 새겨지는 것을 보기</h4>
+  <p class="cap">격자의 <strong>가로는 문장의 글자</strong>, <strong>세로는 셀 상태의 12개 성분</strong>입니다. 칸 하나가 그 순간 그 자리에 적혀 있는 숫자 하나 — 문장 전체가 이 격자로 보관됩니다. <strong>칸을 클릭</strong>하면 그 글자·그 성분의 계산을 아래에서 뜯어 봅니다.</p>
+
+  <div id="st8" class="status" style="margin-top:0"></div>
+
+  <div class="ctrls">
+    <div class="ctrl" style="flex:1 1 100%">
+      <label for="i8">입력 문장 <b class="mn">영어 소문자 · . , ? " 사용 가능</b></label>
+      <input type="text" id="i8" value="the cat sat on the mat. the dog sat on the log." spellcheck="false" autocomplete="off">
+    </div>
+  </div>
+  <div class="btns">
+    <button type="button" data-t8="the cat sat on the mat. the dog sat on the log.">반복 구조</button>
+    <button type="button" data-t8="&quot;where is the cat?&quot; said the boy.">따옴표 문장</button>
+    <button type="button" data-t8="the man walked to the sea and the sea was blue and wide.">긴 문장</button>
+    <button type="button" data-t8="a b c d e f g h i j k l m n o p">공백만 반복</button>
+  </div>
+
+  <p class="subh">격자에 표시할 값</p>
+  <div class="btns" style="margin-top:0">
+    <button type="button" class="v8" data-v8="c" aria-pressed="true">셀 상태 C</button>
+    <button type="button" class="v8" data-v8="h" aria-pressed="false">은닉 h</button>
+    <button type="button" class="v8" data-v8="f" aria-pressed="false">망각 f</button>
+    <button type="button" class="v8" data-v8="i" aria-pressed="false">입력 i</button>
+    <button type="button" class="v8" data-v8="o" aria-pressed="false">출력 o</button>
+  </div>
+
+  <div class="scrollx gridbox" style="margin-top:10px"><canvas id="c8" height="270"></canvas></div>
+  <p class="scrollhint">↔ 문장이 길면 가로로 밀어서 볼 수 있습니다.</p>
+  <div class="legend" id="lg8"></div>
+
+  <div class="btns">
+    <button type="button" id="b8prev">◂ 이전 글자</button>
+    <button type="button" id="b8play" class="primary">▶ 재생</button>
+    <button type="button" id="b8next">다음 글자 ▸</button>
+  </div>
+
+  <p class="subh">고른 칸 한 개에서 벌어지는 일</p>
+  <div class="stepbar" style="margin-top:0">
+    <span>글자 <b id="r8pos">—</b></span>
+    <span class="chip8" id="r8ch">—</span>
+    <span>셀 성분 <b id="r8dim">—</b></span>
+    <span id="r8ctx"></span>
+  </div>
+
+  <div class="eqbox">
+    <p class="hd">셀 상태 갱신 — 옛 장부를 f배로 남기고, 새 후보를 i배로 얹는다</p>
+    <div class="eqline" id="r8eqc">—</div>
+    <div class="splitbar" id="r8split"><i style="width:100%;background:var(--grid)"></i></div>
+    <div class="splitlab"><span id="r8sl">옛 장부에서 온 몫 —</span><span id="r8sr">— 이번 글자가 새로 쓴 몫</span></div>
+    <p class="hd" style="margin:2px 0 0">막대는 <b>결과값에서 각자가 차지한 몫</b>입니다 — 게이트 값 자체(f, i)와는 다른 수치입니다.</p>
+    <p class="hd" style="margin-top:15px">은닉 상태 — 장부에서 지금 꺼내 보일 부분만 o배로 내보낸다</p>
+    <div class="eqline" id="r8eqh">—</div>
+  </div>
+
+  <div class="preds" id="r8preds"></div>
+  <div id="st8b" class="status"></div>
+
+  <p class="subh">한 글자는 얼마나 오래 남는가</p>
+  <p class="cap" style="margin-bottom:10px">같은 문장 두 벌을 흘려보내되 한쪽만 <strong>글자 하나</strong>를 바꿉니다. 두 상태의 거리가 곧 “그 글자가 아직 기억되고 있는 정도”이고, 거리가 0으로 내려앉는 지점이 <strong>잊은 순간</strong>입니다.</p>
+  <div class="ctrls">
+    <div class="ctrl">
+      <label for="s8p">바꿀 위치 <b id="v8p">5</b>번째 글자</label>
+      <input type="range" id="s8p" min="1" max="40" value="5">
+    </div>
+    <div class="ctrl" style="flex:0 1 150px">
+      <label for="s8c">무엇으로 바꿀까</label>
+      <select id="s8c" style="width:100%;font:inherit;font-size:13px;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--page);color:var(--text-primary)"></select>
+    </div>
+  </div>
+  <canvas id="c8b" height="200" style="margin-top:12px"></canvas>
+  <div class="legend">
+    <span><i style="background:var(--s1)"></i>셀 상태 C의 거리 — 장부에 남은 흔적</span>
+    <span><i style="background:var(--s4)"></i>은닉 h의 거리 — 밖으로 새어 나온 흔적</span>
+  </div>
+  <div id="st8c" class="status"></div>
+</div>
+
+<div class="note">두 곡선을 비교해 보세요. 파란 선(<span class="math">C</span>)이 보라 선(<span class="math">h</span>)보다 오래 버팁니다. 셀 상태는 <span class="math">C<sub>t</sub> <span class="op">=</span> f ⊙ C<sub>t−1</sub> <span class="op">+</span> i ⊙ C̃</span> — 원소별 곱 하나와 덧셈 하나만 거치므로 <span class="math">f</span>가 1에 가까우면 흔적이 거의 손실 없이 다음 칸으로 넘어갑니다. 반면 <span class="math">h</span>는 매 스텝 출력 게이트로 한 번 더 걸러지기 때문에, <strong>장부에는 남아 있어도 밖으로는 안 보일 수 있습니다</strong>. §4에서 <span class="math">C</span>와 <span class="math">h</span>를 나눈 이유가 이 두 선의 간격입니다.</div>
+
+<!-- ═══════════════ 8. 그 이후 ═══════════════ -->
 <h2 id="after">그 뒤에 무슨 일이 있었나</h2>
 
 <p>LSTM은 “상태 하나를 잘 유지하는 법”에 대한 답이었습니다. 다음 큰 걸음은 질문 자체를 바꿉니다. <strong>왜 모든 것을 상태 하나에 욱여넣어야 하는가?</strong></p>
@@ -613,7 +796,7 @@ Christopher Olah의 <a href="https://colah.github.io/posts/2015-08-Understanding
 <li>Kalchbrenner 등 (2015), <em>Grid Long Short-Term Memory</em></li>
 <li>Gregor 등 (2015) <em>DRAW</em> · Chung 등 (2015) <em>A Recurrent Latent Variable Model</em> · Bayer &amp; Osendorfer (2015) <em>Learning Stochastic Recurrent Networks</em></li>
 </ul>
-<p style="margin-top:18px"><a href="https://github.com/dev-jonghoonpark/how-ai-works">how-ai-works</a> 시리즈 · 인터랙티브 데모 7종 · 모든 수치는 브라우저에서 실시간으로 계산됩니다.</p>
+<p style="margin-top:18px"><a href="https://github.com/dev-jonghoonpark/how-ai-works">how-ai-works</a> 시리즈 · 인터랙티브 데모 8종 · 모든 수치는 브라우저에서 실시간으로 계산됩니다.</p>
 </footer>
 
 </div>
@@ -673,7 +856,8 @@ function setStatus(el, kind, text){
   var map = {ok:['var(--good)','✓'], warn:['var(--warn)','◈'], bad:['var(--s8)','✕'], info:['var(--s1)','●']};
   var m = map[kind];
   el.style.color = m[0]; el.style.borderColor = m[0];
-  el.innerHTML = '<span class="ico">'+m[1]+'</span>'+text;
+  /* .status 가 inline-flex + gap 이므로 본문은 반드시 한 덩어리로 감싼다 */
+  el.innerHTML = '<span class="ico">'+m[1]+'</span><span>'+text+'</span>';
 }
 function fmt(n){ return Math.round(n).toLocaleString('ko-KR'); }
 function sigmoid(z){ return 1/(1+Math.exp(-z)); }
@@ -1299,8 +1483,469 @@ function draw7(){
   });
 })();
 
+/* ══════════════ 데모 8 : 영어 문장은 어디에 담기는가 ══════════════ */
+var M8 = (function(){
+  var CORPUS = 'the cat sat on the mat. the dog sat on the log. the cat saw the dog and the dog saw the cat. '
+    + '"where is the cat?" said the boy. "the cat is on the mat," said the girl. the boy ran to the mat. '
+    + 'the girl ran to the log. "the dog is on the log," said the boy. a man had a plan. the plan was to '
+    + 'walk to the sea. the sea was far and the road was long. "how far is the sea?" said the man. "the sea '
+    + 'is far," said the old woman by the road. the man ate bread and drank water. then the man slept under '
+    + 'a tree by the road. the sun rose and the man rose. the man saw the sea at last. the sea was blue and '
+    + 'wide. "the sea is here," said the man. the man sat on a rock and looked at the sea for a long time. '
+    + 'the boy and the girl ran to the sea. the dog ran to the sea. the cat sat on the mat and slept. ';
+
+  var N = 12, CHARS = [], CTOI = {}, V = 0, Z = 0, DATA = [];
+  var s = {}, seen = {};
+  for (var q = 0; q < CORPUS.length; q++){ if(!seen[CORPUS[q]]){ seen[CORPUS[q]] = 1; CHARS.push(CORPUS[q]); } }
+  CHARS.sort();
+  V = CHARS.length; Z = N + V;
+  for (var q2 = 0; q2 < V; q2++) CTOI[CHARS[q2]] = q2;
+  for (var q3 = 0; q3 < CORPUS.length; q3++) DATA.push(CTOI[CORPUS[q3]]);
+
+  /* ── 고정 시드 난수 ── */
+  var seed = 20150827 >>> 0;
+  function rnd(){ seed = (seed + 0x6D2B79F5) | 0;
+    var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+  function randn(){ var u = 0, v = 0;
+    while(u === 0) u = rnd(); while(v === 0) v = rnd();
+    return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v); }
+  function zeros(n){ return new Float64Array(n); }
+  function initW(n){ var a = new Float64Array(n); for(var k = 0; k < n; k++) a[k] = randn()*0.09; return a; }
+
+  /* ── 파라미터 ── */
+  var Wf = initW(N*Z), Wi = initW(N*Z), Wc = initW(N*Z), Wo = initW(N*Z);
+  var bf = zeros(N), bi = zeros(N), bc = zeros(N), bo = zeros(N);
+  var Why = initW(V*N), by = zeros(V);
+  bf.fill(1.0);                                        /* 망각 게이트는 열린 채로 시작 */
+  var PS = [Wf, Wi, Wc, Wo, bf, bi, bc, bo, Why, by];
+  var MC = PS.map(function(p){ return zeros(p.length); });   /* Adagrad 누적 */
+  var W_GATE = 4*(N*Z + N), W_OUT = V*N + V;
+
+  /* ── 순전파 한 스텝 ── */
+  function affS(W, b, z, out){ for(var r = 0; r < N; r++){ var t = b[r], off = r*Z;
+    for(var c = 0; c < Z; c++) t += W[off+c]*z[c]; out[r] = 1/(1+Math.exp(-t)); } }
+  function affT(W, b, z, out){ for(var r = 0; r < N; r++){ var t = b[r], off = r*Z;
+    for(var c = 0; c < Z; c++) t += W[off+c]*z[c]; out[r] = Math.tanh(t); } }
+
+  function fwd(xi, hp, cp){
+    var z = zeros(Z); z.set(hp, 0); z[N+xi] = 1;
+    var f = zeros(N), i = zeros(N), g = zeros(N), o = zeros(N);
+    affS(Wf, bf, z, f); affS(Wi, bi, z, i); affT(Wc, bc, z, g); affS(Wo, bo, z, o);
+    var c = zeros(N), tc = zeros(N), h = zeros(N);
+    for(var k = 0; k < N; k++){ c[k] = f[k]*cp[k] + i[k]*g[k]; tc[k] = Math.tanh(c[k]); h[k] = o[k]*tc[k]; }
+    var p = zeros(V), mx = -1e30;
+    for(var r = 0; r < V; r++){ var t = by[r], off = r*N;
+      for(var k2 = 0; k2 < N; k2++) t += Why[off+k2]*h[k2];
+      p[r] = t; if(t > mx) mx = t; }
+    var sum = 0;
+    for(var r2 = 0; r2 < V; r2++){ p[r2] = Math.exp(p[r2]-mx); sum += p[r2]; }
+    for(var r3 = 0; r3 < V; r3++) p[r3] /= sum;
+    return {z:z, f:f, i:i, g:g, o:o, c:c, tc:tc, h:h, p:p, cPrev:cp};
+  }
+
+  /* ── 절단 BPTT 한 번 (SEQ 글자) ── */
+  var SEQ = 25;
+  function bptt(inp, tgt, h0, c0){
+    var T = inp.length, st = new Array(T), h = h0, c = c0, loss = 0, t;
+    for(t = 0; t < T; t++){
+      var o = fwd(inp[t], h, c); st[t] = o;
+      loss += -Math.log(Math.max(o.p[tgt[t]], 1e-12));
+      h = o.h; c = o.c;
+    }
+    var dWf = zeros(N*Z), dWi = zeros(N*Z), dWc = zeros(N*Z), dWo = zeros(N*Z);
+    var dbf = zeros(N), dbi = zeros(N), dbc = zeros(N), dbo = zeros(N);
+    var dWhy = zeros(V*N), dby = zeros(V);
+    var dhN = zeros(N), dcN = zeros(N);
+
+    for(t = T-1; t >= 0; t--){
+      var S = st[t], dy = Float64Array.from(S.p); dy[tgt[t]] -= 1;
+      var dh = zeros(N), r, k, off;
+      for(r = 0; r < V; r++){ off = r*N; var d = dy[r]; dby[r] += d;
+        for(k = 0; k < N; k++){ dWhy[off+k] += d*S.h[k]; dh[k] += Why[off+k]*d; } }
+      for(k = 0; k < N; k++) dh[k] += dhN[k];
+
+      var daf = zeros(N), dai = zeros(N), dag = zeros(N), dao = zeros(N), dc = zeros(N);
+      for(k = 0; k < N; k++){
+        dao[k] = dh[k]*S.tc[k]*S.o[k]*(1-S.o[k]);
+        var dC = dh[k]*S.o[k]*(1 - S.tc[k]*S.tc[k]) + dcN[k];
+        dc[k] = dC;
+        daf[k] = dC*S.cPrev[k]*S.f[k]*(1-S.f[k]);
+        dai[k] = dC*S.g[k]*S.i[k]*(1-S.i[k]);
+        dag[k] = dC*S.i[k]*(1 - S.g[k]*S.g[k]);
+      }
+      var dz = zeros(Z);
+      for(r = 0; r < N; r++){
+        off = r*Z;
+        var af = daf[r], ai = dai[r], ag = dag[r], ao = dao[r];
+        dbf[r] += af; dbi[r] += ai; dbc[r] += ag; dbo[r] += ao;
+        for(k = 0; k < Z; k++){
+          var zc = S.z[k];
+          dWf[off+k] += af*zc; dWi[off+k] += ai*zc; dWc[off+k] += ag*zc; dWo[off+k] += ao*zc;
+          dz[k] += Wf[off+k]*af + Wi[off+k]*ai + Wc[off+k]*ag + Wo[off+k]*ao;
+        }
+      }
+      dhN = dz.slice(0, N);
+      dcN = zeros(N);
+      for(k = 0; k < N; k++) dcN[k] = dc[k]*S.f[k];
+    }
+
+    var GS = [dWf, dWi, dWc, dWo, dbf, dbi, dbc, dbo, dWhy, dby], LR = 0.1;
+    for(var gi = 0; gi < GS.length; gi++){
+      var G = GS[gi], P = PS[gi], M = MC[gi];
+      for(var k3 = 0; k3 < G.length; k3++){
+        var v = G[k3];
+        if(v > 5) v = 5; else if(v < -5) v = -5;
+        M[k3] += v*v;
+        P[k3] -= LR*v/Math.sqrt(M[k3] + 1e-8);
+      }
+    }
+    return {loss: loss/T, h: st[T-1].h, c: st[T-1].c};
+  }
+
+  function runSeq(idxs){
+    var h = zeros(N), c = zeros(N), out = [];
+    for(var t = 0; t < idxs.length; t++){
+      var o = fwd(idxs[t], h, c); o.ch = CHARS[idxs[t]];
+      out.push(o); h = o.h; c = o.c;
+    }
+    return out;
+  }
+
+  /* ── 화면 상태 ── */
+  var steps = [], idxs = [], curT = 0, curD = 0, view = 'c', playing = false, timer = null;
+  var trained = 0, TOTAL = 2400, CHUNK = 60, ptr = 0, hCar = zeros(N), cCar = zeros(N), firstRun = true;
+  var smooth = Math.log(V), started = false;
+  var MAXLEN = 64, CTXWIN = 25;
+
+  function f8(x, n){ n = (n === undefined) ? 2 : n;
+    return (x < 0 ? '−' : '') + Math.abs(x).toFixed(n); }
+  function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function glyph(ch){ return ch === ' ' ? '␣' : esc(ch); }
+  function mix(hex, t, bg){
+    function H(x){ return [parseInt(x.slice(1,3),16), parseInt(x.slice(3,5),16), parseInt(x.slice(5,7),16)]; }
+    var a = H(bg), b = H(hex);
+    return 'rgb(' + a.map(function(v,k){ return Math.round(v + (b[k]-v)*t); }).join(',') + ')';
+  }
+
+  /* ── 저장소 지도 ── */
+  function shelves(){
+    $('#sh8w').textContent = (W_GATE + W_OUT).toLocaleString('ko-KR');
+    $('#sh8g').textContent = W_GATE.toLocaleString('ko-KR');
+    $('#sh8o').textContent = W_OUT.toLocaleString('ko-KR');
+    $('#sh8s').textContent = String(2*N);
+    $('#sh8c').textContent = N + '개';
+    $('#sh8h').textContent = N + '개';
+    var T = idxs.length, raw = T*V;
+    $('#sq8').innerHTML = T === 0
+      ? '문장을 넣으면 압축률이 여기에 표시됩니다.'
+      : '지금 문장은 <b>' + T + '</b>글자. 한 글자를 어휘 <b>' + V + '</b>칸짜리 원-핫 벡터로 펴면 입력은 모두 '
+      + '<b>' + raw.toLocaleString('ko-KR') + '</b>개의 0과 1입니다. LSTM은 그 전부를 마지막에 <b>' + (2*N)
+      + '</b>개의 실수로 접어 둡니다 — 약 <b>' + Math.round(raw/(2*N)) + '</b>대 1 압축이고, 문장이 길어질수록 '
+      + '압축률만 올라갈 뿐 <b>' + (2*N) + '</b>이라는 이 크기는 그대로입니다.';
+  }
+
+  /* ── 격자 ── */
+  var CW = 23, RH = 19, PADL = 48, PADT = 30, PADB = 10;
+  function vspec(){
+    if(view === 'c') return {get:function(o){return o.c;}, div:true,  col:null,      lab:'C'};
+    if(view === 'h') return {get:function(o){return o.h;}, div:true,  col:null,      lab:'h'};
+    if(view === 'f') return {get:function(o){return o.f;}, div:false, col:C('--s2'), lab:'f'};
+    if(view === 'i') return {get:function(o){return o.i;}, div:false, col:C('--s3'), lab:'i'};
+    return {get:function(o){return o.o;}, div:false, col:C('--s4'), lab:'o'};
+  }
+  function cellCol(v, sp, mx, bg){
+    if(sp.div){
+      var t = Math.min(1, Math.abs(v)/(mx || 1));
+      return mix(v >= 0 ? C('--hot') : C('--cold'), 0.12 + 0.88*Math.sqrt(t), bg);
+    }
+    return mix(sp.col, Math.min(1, v)*0.92, bg);
+  }
+
+  function drawGrid(){
+    var cv = $('#c8'), sp = vspec(), T = steps.length;
+    var cssW = PADL + Math.max(T,1)*CW + 10, cssH = PADT + N*RH + PADB;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+    cv.width = Math.round(cssW*dpr); cv.height = Math.round(cssH*dpr);
+    var g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var bg = C('--page'), mut = C('--muted'), ink2 = C('--text-secondary'), ink = C('--text-primary');
+    g.fillStyle = bg; g.fillRect(0, 0, cssW, cssH);
+    if(!T){ return; }
+
+    var mx = 0.001, t, k;
+    for(t = 0; t < T; t++){ var a = sp.get(steps[t]);
+      for(k = 0; k < N; k++) if(Math.abs(a[k]) > mx) mx = Math.abs(a[k]); }
+
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.font = '10.5px ui-monospace,SFMono-Regular,Menlo,monospace';
+    for(k = 0; k < N; k++){
+      g.fillStyle = (k === curD) ? C('--s1') : mut;
+      g.fillText(sp.lab + (k+1), PADL - 9, PADT + k*RH + RH/2);
+    }
+    g.textAlign = 'center';
+    g.font = '12px ui-monospace,SFMono-Regular,Menlo,monospace';
+    for(t = 0; t < T; t++){
+      var ch = steps[t].ch;
+      g.fillStyle = (t === curT) ? C('--s1') : (ch === ' ' ? mut : ink2);
+      g.fillText(ch === ' ' ? '␣' : ch, PADL + t*CW + CW/2, PADT - 13);
+    }
+    for(t = 0; t < T; t++){
+      var arr = sp.get(steps[t]);
+      for(k = 0; k < N; k++){
+        g.fillStyle = cellCol(arr[k], sp, mx, bg);
+        g.fillRect(PADL + t*CW + 1, PADT + k*RH + 1, CW - 2, RH - 2);
+      }
+    }
+    g.strokeStyle = C('--s1'); g.lineWidth = 2;
+    g.strokeRect(PADL + curT*CW + 0.5, PADT + 0.5, CW - 1, N*RH - 1);
+    g.globalAlpha = 0.5;
+    g.strokeRect(PADL + 0.5, PADT + curD*RH + 0.5, T*CW - 1, RH - 1);
+    g.globalAlpha = 1;
+    g.strokeStyle = ink; g.lineWidth = 2;
+    g.strokeRect(PADL + curT*CW + 1.5, PADT + curD*RH + 1.5, CW - 3, RH - 3);
+
+    var bgc = bg, L = $('#lg8');
+    if(sp.div){
+      L.innerHTML = '<span><i class="sq" style="background:' + mix(C('--cold'), 1, bgc) + '"></i>음수 −' + mx.toFixed(1) + '</span>'
+        + '<span><i class="sq" style="background:' + bgc + '"></i>0 · 비어 있음</span>'
+        + '<span><i class="sq" style="background:' + mix(C('--hot'), 1, bgc) + '"></i>양수 +' + mx.toFixed(1) + '</span>'
+        + '<span style="color:var(--muted)">색이 진할수록 그 자리에 큰 값이 적혀 있다는 뜻</span>';
+    } else {
+      L.innerHTML = '<span><i class="sq" style="background:' + mix(sp.col, 0.04, bgc) + '"></i>0 · 닫힘</span>'
+        + '<span><i class="sq" style="background:' + mix(sp.col, 0.46, bgc) + '"></i>0.5</span>'
+        + '<span><i class="sq" style="background:' + mix(sp.col, 0.92, bgc) + '"></i>1 · 열림</span>'
+        + '<span style="color:var(--muted)">게이트는 0과 1 사이의 밸브 개도</span>';
+    }
+  }
+
+  /* ── 고른 칸 상세 ── */
+  function detail(){
+    if(!steps.length){ $('#r8eqc').textContent = '—'; $('#r8eqh').textContent = '—'; return; }
+    var o = steps[curT], d = curD;
+    var keep = o.f[d]*o.cPrev[d], write = o.i[d]*o.g[d];
+
+    $('#r8pos').textContent = (curT+1) + ' / ' + steps.length;
+    $('#r8ch').innerHTML = glyph(o.ch);
+    $('#r8dim').textContent = 'C' + (d+1);
+
+    var from = Math.max(0, curT - (CTXWIN - 1)), ctx = '';
+    for(var t = from; t <= curT; t++) ctx += steps[t].ch;
+    $('#r8ctx').innerHTML = '여기까지 읽음 <b class="mn">' + (from > 0 ? '…' : '')
+      + ctx.split(' ').join('␣').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      + '</b> <span style="color:var(--muted)">최근 ' + CTXWIN + '자만 표시</span>';
+
+    $('#r8eqc').innerHTML =
+      '<span class="cc">C' + (d+1) + '</span> <span class="k">=</span> '
+      + '<span class="cf">f' + (d+1) + '</span> <span class="k">·</span> C' + (d+1) + '<span class="k">(이전)</span> '
+      + '<span class="k">+</span> <span class="ci">i' + (d+1) + '</span> <span class="k">·</span> '
+      + '<span class="ci">C̃' + (d+1) + '</span><br>'
+      + '<span class="k">&nbsp;&nbsp;&nbsp;=</span> <span class="cf">' + o.f[d].toFixed(2) + '</span> '
+      + '<span class="k">×</span> ' + f8(o.cPrev[d]) + ' <span class="k">+</span> '
+      + '<span class="ci">' + o.i[d].toFixed(2) + '</span> <span class="k">×</span> ' + f8(o.g[d]) + '<br>'
+      + '<span class="k">&nbsp;&nbsp;&nbsp;=</span> ' + f8(keep) + ' <span class="k">+</span> ' + f8(write)
+      + ' <span class="k">=</span> <span class="cc">' + f8(o.c[d]) + '</span>';
+
+    var ak = Math.abs(keep), aw = Math.abs(write), tot = ak + aw;
+    var pk = tot > 0 ? Math.round(100*ak/tot) : 100;
+    $('#r8split').innerHTML = '<i style="width:' + pk + '%;background:var(--s2)"></i>'
+      + '<i style="width:' + (100-pk) + '%;background:var(--s3)"></i>';
+    $('#r8sl').textContent = '옛 장부에서 온 몫 ' + pk + '%';
+    $('#r8sr').textContent = (100-pk) + '% 이번 글자가 새로 쓴 몫';
+
+    $('#r8eqh').innerHTML =
+      '<span class="co">h' + (d+1) + '</span> <span class="k">=</span> <span class="co">o' + (d+1) + '</span> '
+      + '<span class="k">·</span> tanh(<span class="cc">C' + (d+1) + '</span>) <span class="k">=</span> '
+      + '<span class="co">' + o.o[d].toFixed(2) + '</span> <span class="k">×</span> ' + f8(o.tc[d])
+      + ' <span class="k">=</span> <span class="co">' + f8(o.h[d]) + '</span>';
+
+    var ord = [];
+    for(var r = 0; r < V; r++) ord.push(r);
+    ord.sort(function(a, b){ return o.p[b] - o.p[a]; });
+    var truth = (curT + 1 < steps.length) ? steps[curT+1].ch : null;
+    var html = '<span class="lb">이 상태로 예측한 다음 글자</span>';
+    for(var n = 0; n < 5; n++){
+      var ci = ord[n], cch = CHARS[ci], hit = (truth !== null && cch === truth);
+      html += '<span class="pred' + (hit ? ' hit' : '') + '"><b>' + glyph(cch) + '</b>'
+        + Math.round(100*o.p[ci]) + '%</span>';
+    }
+    $('#r8preds').innerHTML = html;
+
+    var fv = o.f[d], msg;
+    if(fv > 0.9 && Math.abs(write) < 0.05)
+      msg = '<b>C' + (d+1) + '</b> — 지금 <b>보관 모드</b>입니다. 망각 게이트가 ' + fv.toFixed(2)
+        + '로 거의 열려 있고 새로 쓰는 양이 0에 가까우니, 이 글자는 이 자리를 건드리지 않고 지나갑니다.';
+    else if(fv < 0.35)
+      msg = '<b>C' + (d+1) + '</b> — 지금 <b>초기화되는 중</b>입니다. 망각 게이트가 ' + fv.toFixed(2)
+        + '까지 닫히면서, 적혀 있던 ' + f8(o.cPrev[d]) + ' → ' + f8(keep) + ' 으로 지워졌습니다.';
+    else
+      msg = '<b>C' + (d+1) + '</b> — 지금 <b>갱신 중</b>입니다. 옛 값의 ' + Math.round(100*fv)
+        + '%를 남기면서 새 후보를 ' + f8(write) + '만큼 얹었습니다 — 가장 흔한 상태입니다.';
+    setStatus($('#st8b'), 'info', msg);
+  }
+
+  /* ── 기억 수명 ── */
+  function drawDecay(){
+    var cv = $('#c8b'), F = fit(cv), g = F.g, w = F.w, h = F.h, T = steps.length;
+    g.fillStyle = C('--page'); g.fillRect(0, 0, w, h);
+    var pos = Math.min(parseInt($('#s8p').value, 10), Math.max(T, 1)) - 1;
+    if(T < 3 || pos >= T){ setStatus($('#st8c'), 'warn', '문장을 조금 더 길게 넣어 주세요'); return; }
+
+    var alt = idxs.slice(); alt[pos] = CTOI[$('#s8c').value];
+    var B = runSeq(alt), dC = [], dH = [], t, k;
+    for(t = 0; t < T; t++){
+      var a = 0, b = 0;
+      for(k = 0; k < N; k++){
+        var u = steps[t].c[k] - B[t].c[k], v = steps[t].h[k] - B[t].h[k];
+        a += u*u; b += v*v;
+      }
+      dC.push(Math.sqrt(a)); dH.push(Math.sqrt(b));
+    }
+    var peak = 1e-6;
+    for(t = 0; t < T; t++){ if(dC[t] > peak) peak = dC[t]; if(dH[t] > peak) peak = dH[t]; }
+
+    var L = 44, R = 12, TP = 14, B2 = 28, pw = w - L - R, ph = h - TP - B2;
+    function X(i){ return L + (T <= 1 ? 0 : i/(T-1))*pw; }
+    function Y(v){ return TP + ph - (v/peak)*ph; }
+
+    g.strokeStyle = C('--grid'); g.lineWidth = 1;
+    for(var q = 0; q <= 4; q++){
+      var vv = peak*q/4, yy = Y(vv);
+      g.beginPath(); g.moveTo(L, yy); g.lineTo(L+pw, yy); g.stroke();
+      mono(g, vv.toFixed(1), L-7, yy+3, C('--muted'), 10, 'right');
+    }
+    line(g, X(pos), TP, X(pos), TP+ph, C('--s8'), 1.5, [3,3]);
+    mono(g, '여기를 바꿈', Math.min(X(pos)+5, L+pw-66), TP+11, C('--s8'), 10, 'left');
+
+    function poly(arr, col){
+      g.strokeStyle = col; g.lineWidth = 2; g.beginPath();
+      for(var i = 0; i < arr.length; i++){ if(i) g.lineTo(X(i), Y(arr[i])); else g.moveTo(X(i), Y(arr[i])); }
+      g.stroke();
+    }
+    poly(dC, C('--s1')); poly(dH, C('--s4'));
+
+    var stepEvery = Math.max(1, Math.ceil(T/22));
+    for(t = 0; t < T; t += stepEvery){
+      mono(g, steps[t].ch === ' ' ? '␣' : steps[t].ch, X(t), TP+ph+15, C('--muted'), 10, 'center');
+    }
+
+    var thr = peak*0.1, life = -1;
+    for(t = pos+1; t < T; t++){ if(dC[t] < thr){ life = t - pos; break; } }
+    setStatus($('#st8c'), life < 0 ? 'ok' : 'info', life < 0
+      ? '문장 끝(' + (T-1-pos) + '글자 뒤)까지도 셀 상태에 흔적이 남아 있습니다'
+      : '셀 상태의 흔적이 10% 아래로 내려가기까지 <b>' + life + '글자</b>');
+  }
+
+  /* ── 갱신 ── */
+  function refresh(){ drawGrid(); detail(); }
+  function recompute(){
+    var raw = $('#i8').value.toLowerCase(), keep = [];
+    for(var q = 0; q < raw.length && keep.length < MAXLEN; q++){
+      if(CTOI[raw[q]] !== undefined) keep.push(CTOI[raw[q]]);
+    }
+    idxs = keep;
+    steps = idxs.length ? runSeq(idxs) : [];
+    if(curT > steps.length - 1) curT = Math.max(0, steps.length - 1);
+    if(firstRun && steps.length){ curT = Math.min(9, steps.length - 1); curD = 3; firstRun = false; }
+    $('#s8p').max = Math.max(3, steps.length);
+    if(parseInt($('#s8p').value, 10) > steps.length){
+      $('#s8p').value = Math.max(1, Math.floor(steps.length/4));
+    }
+    $('#v8p').textContent = $('#s8p').value;
+    shelves(); refresh(); drawDecay();
+  }
+
+  /* ── 학습 ── */
+  function chunk(){
+    for(var n = 0; n < CHUNK && trained < TOTAL; n++){
+      if(ptr + SEQ + 1 >= DATA.length){ ptr = 0; hCar = zeros(N); cCar = zeros(N); }
+      var r = bptt(DATA.slice(ptr, ptr+SEQ), DATA.slice(ptr+1, ptr+SEQ+1), hCar, cCar);
+      smooth = smooth*0.99 + r.loss*0.01;
+      hCar = r.h; cCar = r.c; ptr += SEQ; trained++;
+    }
+    var pct = Math.round(100*trained/TOTAL);
+    if(trained < TOTAL){
+      setStatus($('#st8'), 'warn', '학습 ' + pct + '% · 손실 ' + smooth.toFixed(2)
+        + ' <span style="color:var(--muted);font-weight:400">(무작위 추측 ' + Math.log(V).toFixed(2) + ')</span>');
+      recompute();
+      requestAnimationFrame(chunk);
+    } else {
+      setStatus($('#st8'), 'ok', '학습 완료 · ' + TOTAL.toLocaleString('ko-KR') + '회 · 손실 ' + smooth.toFixed(2)
+        + ' <span style="color:var(--muted);font-weight:400">(무작위 추측 ' + Math.log(V).toFixed(2) + ')</span>');
+      recompute();
+    }
+  }
+  function start(){ if(started) return; started = true; requestAnimationFrame(chunk); }
+
+  /* ── 컨트롤 ── */
+  function stop(){ playing = false; clearInterval(timer);
+    $('#b8play').textContent = '▶ 재생'; $('#b8play').setAttribute('aria-pressed', 'false'); }
+
+  $('#b8play').addEventListener('click', function(){
+    if(playing){ stop(); return; }
+    playing = true;
+    $('#b8play').textContent = '❚❚ 정지';
+    $('#b8play').setAttribute('aria-pressed', 'true');
+    timer = setInterval(function(){
+      if(!steps.length){ stop(); return; }
+      curT = (curT + 1) % steps.length; refresh();
+    }, 340);
+  });
+  $('#b8prev').addEventListener('click', function(){
+    stop(); if(steps.length) curT = (curT - 1 + steps.length) % steps.length; refresh(); });
+  $('#b8next').addEventListener('click', function(){
+    stop(); if(steps.length) curT = (curT + 1) % steps.length; refresh(); });
+
+  $('#c8').addEventListener('click', function(e){
+    if(!steps.length) return;
+    var r = this.getBoundingClientRect();
+    var t = Math.floor((e.clientX - r.left - PADL)/CW), d = Math.floor((e.clientY - r.top - PADT)/RH);
+    if(t >= 0 && t < steps.length) curT = t;
+    if(d >= 0 && d < N) curD = d;
+    stop(); refresh();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.v8'), function(b){
+    b.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.v8'), function(o){
+        o.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      view = b.dataset.v8; drawGrid();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-t8]'), function(b){
+    b.addEventListener('click', function(){ $('#i8').value = b.dataset.t8; stop(); recompute(); });
+  });
+  $('#i8').addEventListener('input', function(){ stop(); recompute(); });
+  $('#s8p').addEventListener('input', function(){ $('#v8p').textContent = this.value; drawDecay(); });
+  $('#s8c').addEventListener('change', drawDecay);
+
+  var opts = '';
+  for(var q4 = 0; q4 < V; q4++){
+    var ch = CHARS[q4];
+    if(/[a-z ]/.test(ch)) opts += '<option value="' + (ch === ' ' ? ' ' : ch) + '"'
+      + (ch === 'b' ? ' selected' : '') + '>' + (ch === ' ' ? '␣ (공백)' : ch) + '</option>';
+  }
+  $('#s8c').innerHTML = opts;
+
+  /* 스크롤해서 이 절에 닿으면 학습을 시작한다 — 페이지 로드를 막지 않기 위해 */
+  if(window.IntersectionObserver){
+    var io = new IntersectionObserver(function(es){
+      for(var n = 0; n < es.length; n++) if(es[n].isIntersecting){ start(); io.disconnect(); }
+    }, {rootMargin: '200px'});
+    io.observe($('#store'));
+    setStatus($('#st8'), 'info', '스크롤해서 이 절에 닿으면 학습이 시작됩니다');
+  } else { start(); }
+
+  shelves(); recompute();
+  return {draw: function(){ drawGrid(); detail(); drawDecay(); }};
+})();
+function draw8(){ M8.draw(); }
+
 /* ────────── boot ────────── */
-function drawAll(){ draw1(); draw2(); draw3(); draw4(); draw5(); draw6(); draw7(); }
+function drawAll(){ draw1(); draw2(); draw3(); draw4(); draw5(); draw6(); draw7(); draw8(); }
 window.addEventListener('resize', drawAll);
 document.querySelector('.stepbtn').setAttribute('aria-pressed','true');
 drawAll();
