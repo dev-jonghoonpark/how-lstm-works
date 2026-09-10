@@ -202,7 +202,7 @@ footer a{color:var(--text-secondary)}
 /* ---- 데모 8 : 격자와 방정식 ---- */
 .demo .subh{font-size:12px;font-weight:650;color:var(--text-secondary);letter-spacing:0.02em;
   margin:20px 0 9px;padding-top:15px;border-top:1px solid var(--border)}
-#c8{width:auto;max-width:none;min-width:0;border-radius:0}
+#c8,#c8b{width:auto;max-width:none;min-width:0;border-radius:0}
 .gridbox{border:1px solid var(--border);border-radius:10px;background:var(--page);margin-top:2px}
 .legend i.sq{width:13px;height:13px;border-radius:3px;border:1px solid var(--border)}
 .stepbar{display:flex;flex-wrap:wrap;gap:9px 16px;align-items:center;font-size:13px;
@@ -721,21 +721,28 @@ footer a{color:var(--text-secondary)}
   <div id="st8b" class="status"></div>
 
   <p class="subh">한 글자는 얼마나 오래 남는가</p>
-  <p class="cap" style="margin-bottom:10px">같은 문장 두 벌을 흘려보내되 한쪽만 <strong>글자 하나</strong>를 바꿉니다. 두 상태의 거리가 곧 “그 글자가 아직 기억되고 있는 정도”이고, 거리가 0으로 내려앉는 지점이 <strong>잊은 순간</strong>입니다.</p>
+  <p class="cap" style="margin-bottom:12px">같은 문장을 <strong>두 벌</strong> 흘려보냅니다. 두 문장은 <strong>딱 한 글자만</strong> 다릅니다 — 아래 그림의 <strong>A행과 B행</strong>이 그 두 문장이고, 빨간 띠가 다른 글자입니다. 그 뒤로 두 LSTM의 장부가 <strong>얼마나 벌어진 채로 남아 있는지</strong>를 재면, 그것이 곧 “바꾼 그 글자를 아직 기억하고 있는 정도”입니다. 세로축은 <strong>바뀐 직후를 100%로 둔 상대 크기</strong>입니다 — 두 곡선을 각자의 출발점 기준으로 재기 때문에, 값의 크기가 아니라 <strong>얼마나 오래 버티는지</strong>를 비교하게 됩니다. 곡선이 도중에 다시 솟는 것은 정상입니다. 같은 단어가 또 나오면 두 장부의 차이가 되살아나기도 합니다.</p>
   <div class="ctrls">
     <div class="ctrl">
-      <label for="s8p">바꿀 위치 <b id="v8p">5</b>번째 글자</label>
+      <label for="s8p">몇 번째 글자를 바꿀까 <b id="v8p">5</b></label>
       <input type="range" id="s8p" min="1" max="40" value="5">
     </div>
-    <div class="ctrl" style="flex:0 1 150px">
+    <div class="ctrl" style="flex:0 1 160px">
       <label for="s8c">무엇으로 바꿀까</label>
       <select id="s8c" style="width:100%;font:inherit;font-size:13px;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--page);color:var(--text-primary)"></select>
     </div>
   </div>
-  <canvas id="c8b" height="200" style="margin-top:12px"></canvas>
+  <div class="scrollx gridbox" style="margin-top:10px"><canvas id="c8b" height="230"></canvas></div>
+  <p class="scrollhint">↔ 문장이 길면 가로로 밀어서 볼 수 있습니다.</p>
   <div class="legend">
-    <span><i style="background:var(--s1)"></i>셀 상태 C의 거리 — 장부에 남은 흔적</span>
-    <span><i style="background:var(--s4)"></i>은닉 h의 거리 — 밖으로 새어 나온 흔적</span>
+    <span><i style="background:var(--s1)"></i>셀 상태 C가 벌어진 정도</span>
+    <span><i style="background:var(--s4)"></i>은닉 h가 벌어진 정도</span>
+    <span><i style="background:var(--muted)"></i>10% 선 — 이 아래면 거의 잊은 것</span>
+  </div>
+  <div class="readout">
+    <div>문장 끝에서 C에 남은 흔적<b id="r8kc">—</b></div>
+    <div>문장 끝에서 h에 남은 흔적<b id="r8kh">—</b></div>
+    <div>C가 10% 아래로 내려가기까지<b id="r8life">—</b></div>
   </div>
   <div id="st8c" class="status"></div>
 </div>
@@ -1786,56 +1793,126 @@ var M8 = (function(){
     setStatus($('#st8b'), 'info', msg);
   }
 
-  /* ── 기억 수명 ── */
-  function drawDecay(){
-    var cv = $('#c8b'), F = fit(cv), g = F.g, w = F.w, h = F.h, T = steps.length;
-    g.fillStyle = C('--page'); g.fillRect(0, 0, w, h);
-    var pos = Math.min(parseInt($('#s8p').value, 10), Math.max(T, 1)) - 1;
-    if(T < 3 || pos >= T){ setStatus($('#st8c'), 'warn', '문장을 조금 더 길게 넣어 주세요'); return; }
+  /* ── 기억 수명 : 한 글자만 다른 두 문장을 나란히 흘려보낸다 ── */
+  var DEC_ROWA = 18, DEC_ROWB = 37, DEC_TP = 56, DEC_BOT = 14, DEC_H = 230;
 
-    var alt = idxs.slice(); alt[pos] = CTOI[$('#s8c').value];
-    var B = runSeq(alt), dC = [], dH = [], t, k;
+  function drawDecay(){
+    var cv = $('#c8b'), T = steps.length;
+    var cssW = PADL + Math.max(T, 1)*CW + 10;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.style.width = cssW + 'px'; cv.style.height = DEC_H + 'px';
+    cv.width = Math.round(cssW*dpr); cv.height = Math.round(DEC_H*dpr);
+    var g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var bg = C('--page'), mut = C('--muted'), ink2 = C('--text-secondary'), ink = C('--text-primary');
+    g.fillStyle = bg; g.fillRect(0, 0, cssW, DEC_H);
+
+    $('#r8kc').textContent = '—'; $('#r8kh').textContent = '—'; $('#r8life').textContent = '—';
+    if(T < 3){ setStatus($('#st8c'), 'warn', '문장을 세 글자 이상 넣어 주세요'); return; }
+
+    var pos = Math.min(parseInt($('#s8p').value, 10), T) - 1;
+    var rep = $('#s8c').value, orig = CHARS[idxs[pos]];
+    var alt = idxs.slice(); alt[pos] = CTOI[rep];
+    var B = runSeq(alt);
+
+    var ph = DEC_H - DEC_TP - DEC_BOT, t, k;
+    function X(i){ return PADL + i*CW + CW/2; }
+
+    /* 바꾼 글자의 세로 띠 */
+    g.fillStyle = C('--s8'); g.globalAlpha = 0.13;
+    g.fillRect(PADL + pos*CW, 0, CW, DEC_H);
+    g.globalAlpha = 1;
+
+    /* 두 문장 A · B */
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.font = '600 11px ui-monospace,SFMono-Regular,Menlo,monospace';
+    g.fillStyle = mut;
+    g.fillText('A', PADL - 9, DEC_ROWA);
+    g.fillText('B', PADL - 9, DEC_ROWB);
+    g.textAlign = 'center';
+    g.font = '12px ui-monospace,SFMono-Regular,Menlo,monospace';
     for(t = 0; t < T; t++){
-      var a = 0, b = 0;
+      var a = steps[t].ch, b = CHARS[alt[t]], hit = (t === pos);
+      g.fillStyle = hit ? C('--s8') : (a === ' ' ? mut : ink2);
+      g.font = (hit ? '700 ' : '') + '12px ui-monospace,SFMono-Regular,Menlo,monospace';
+      g.fillText(a === ' ' ? '␣' : a, X(t), DEC_ROWA);
+      g.fillText(b === ' ' ? '␣' : b, X(t), DEC_ROWB);
+    }
+    if(rep === orig){
+      g.textAlign = 'left'; g.fillStyle = C('--s8');
+      g.font = '600 11px system-ui,-apple-system,sans-serif';
+      g.fillText('두 문장이 똑같습니다 — 다른 글자를 골라 주세요', PADL, DEC_TP + ph/2);
+      setStatus($('#st8c'), 'warn', '바꿀 글자가 원래 글자와 같아서 두 문장에 차이가 없습니다. 다른 글자를 골라 주세요.');
+      return;
+    }
+    g.strokeStyle = C('--grid'); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(PADL, DEC_TP - 9); g.lineTo(PADL + T*CW, DEC_TP - 9); g.stroke();
+
+    /* 두 장부가 벌어진 정도 */
+    var dC = [], dH = [];
+    for(t = 0; t < T; t++){
+      var sc = 0, sh = 0;
       for(k = 0; k < N; k++){
         var u = steps[t].c[k] - B[t].c[k], v = steps[t].h[k] - B[t].h[k];
-        a += u*u; b += v*v;
+        sc += u*u; sh += v*v;
       }
-      dC.push(Math.sqrt(a)); dH.push(Math.sqrt(b));
+      dC.push(Math.sqrt(sc)); dH.push(Math.sqrt(sh));
     }
-    var peak = 1e-6;
-    for(t = 0; t < T; t++){ if(dC[t] > peak) peak = dC[t]; if(dH[t] > peak) peak = dH[t]; }
+    /* 각 곡선을 자기 자신의 "바뀐 직후" 값으로 정규화한다 —
+       크기가 아니라 얼마나 오래 버티는지를 비교하기 위해서다 */
+    var bC = dC[pos] || 1e-9, bH = dH[pos] || 1e-9, pC = [], pH = [];
+    for(t = 0; t < T; t++){ pC.push(100*dC[t]/bC); pH.push(100*dH[t]/bH); }
+    var mx = 100;
+    for(t = pos; t < T; t++){ if(pC[t] > mx) mx = pC[t]; if(pH[t] > mx) mx = pH[t]; }
+    mx = Math.ceil(mx/25)*25;
+    function Y(v){ return DEC_TP + ph - (v/mx)*ph; }
 
-    var L = 44, R = 12, TP = 14, B2 = 28, pw = w - L - R, ph = h - TP - B2;
-    function X(i){ return L + (T <= 1 ? 0 : i/(T-1))*pw; }
-    function Y(v){ return TP + ph - (v/peak)*ph; }
-
-    g.strokeStyle = C('--grid'); g.lineWidth = 1;
-    for(var q = 0; q <= 4; q++){
-      var vv = peak*q/4, yy = Y(vv);
-      g.beginPath(); g.moveTo(L, yy); g.lineTo(L+pw, yy); g.stroke();
-      mono(g, vv.toFixed(1), L-7, yy+3, C('--muted'), 10, 'right');
+    /* 눈금 : 0 · 50 · 100%, 그리고 위로 더 있으면 꼭대기 */
+    var ticks = [0, 50, 100];
+    if(mx > 110) ticks.push(mx);
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.font = '10px ui-monospace,SFMono-Regular,Menlo,monospace';
+    for(k = 0; k < ticks.length; k++){
+      var yy = Y(ticks[k]);
+      g.strokeStyle = C('--grid'); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(PADL, yy); g.lineTo(PADL + T*CW, yy); g.stroke();
+      g.fillStyle = mut; g.fillText(ticks[k] + '%', PADL - 7, yy);
     }
-    line(g, X(pos), TP, X(pos), TP+ph, C('--s8'), 1.5, [3,3]);
-    mono(g, '여기를 바꿈', Math.min(X(pos)+5, L+pw-66), TP+11, C('--s8'), 10, 'left');
+    /* 10% — 거의 잊은 선 */
+    var y10 = Y(10);
+    g.save(); g.setLineDash([4, 3]); g.strokeStyle = mut; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(PADL, y10); g.lineTo(PADL + T*CW, y10); g.stroke(); g.restore();
+    g.fillStyle = mut; g.fillText('10%', PADL - 7, y10);
 
     function poly(arr, col){
-      g.strokeStyle = col; g.lineWidth = 2; g.beginPath();
-      for(var i = 0; i < arr.length; i++){ if(i) g.lineTo(X(i), Y(arr[i])); else g.moveTo(X(i), Y(arr[i])); }
+      g.strokeStyle = col; g.lineWidth = 2; g.lineJoin = 'round'; g.beginPath();
+      for(var i = 0; i < arr.length; i++){
+        if(i) g.lineTo(X(i), Y(arr[i])); else g.moveTo(X(i), Y(arr[i]));
+      }
       g.stroke();
     }
-    poly(dC, C('--s1')); poly(dH, C('--s4'));
-
-    var stepEvery = Math.max(1, Math.ceil(T/22));
-    for(t = 0; t < T; t += stepEvery){
-      mono(g, steps[t].ch === ' ' ? '␣' : steps[t].ch, X(t), TP+ph+15, C('--muted'), 10, 'center');
+    poly(pH, C('--s4')); poly(pC, C('--s1'));
+    dot(g, X(pos), Y(100), 3.5, C('--s8'));
+    /* 갈라지기 전 왼쪽은 두 곡선이 0에 붙어 있어 비어 있다 — 자리가 있을 때만 라벨을 둔다 */
+    g.font = '600 10px system-ui,-apple-system,sans-serif'; g.fillStyle = C('--s8');
+    g.textBaseline = 'middle';
+    if(X(pos) - PADL > 86){
+      g.textAlign = 'right';
+      g.fillText('여기서 갈라짐 →', X(pos) - CW/2 - 5, Y(55));
+    } else if(PADL + T*CW - X(pos) > 86){
+      g.textAlign = 'left';
+      g.fillText('← 여기서 갈라짐', X(pos) + CW/2 + 5, Y(mx - 8));
     }
 
-    var thr = peak*0.1, life = -1;
-    for(t = pos+1; t < T; t++){ if(dC[t] < thr){ life = t - pos; break; } }
-    setStatus($('#st8c'), life < 0 ? 'ok' : 'info', life < 0
-      ? '문장 끝(' + (T-1-pos) + '글자 뒤)까지도 셀 상태에 흔적이 남아 있습니다'
-      : '셀 상태의 흔적이 10% 아래로 내려가기까지 <b>' + life + '글자</b>');
+    /* 결과 */
+    var endC = Math.round(pC[T-1]), endH = Math.round(pH[T-1]), life = -1;
+    for(t = pos + 1; t < T; t++){ if(pC[t] < 10){ life = t - pos; break; } }
+    $('#r8kc').textContent = endC + '%';
+    $('#r8kh').textContent = endH + '%';
+    $('#r8life').textContent = (life < 0 ? '끝까지 안 내려감' : life + '글자');
+    setStatus($('#st8c'), life < 0 ? 'ok' : 'info',
+      'A와 B는 ' + (pos+1) + '번째 글자 “' + glyph(orig) + '” → “' + glyph(rep) + '” 하나만 다릅니다. '
+      + '그 뒤로 ' + (T-1-pos) + '글자를 더 읽었는데도 셀 상태에는 처음 차이의 <b>' + endC + '%</b>가 남아 있습니다'
+      + ' — 같은 시점에 은닉 상태에 남은 것은 <b>' + endH + '%</b>입니다.');
   }
 
   /* ── 갱신 ── */
